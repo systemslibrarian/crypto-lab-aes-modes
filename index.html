@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive demonstration of AES block cipher modes — ECB, CBC, CTR, GCM, CCM — with live padding oracle attack.">
+  <title>AES Modes — crypto-lab</title>
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <div class="header-top">
+      <span class="category-chip" aria-label="Category: Block Cipher Modes">Block Cipher Modes</span>
+      <button
+        id="theme-toggle"
+        type="button"
+        class="theme-toggle"
+        aria-label="Toggle dark/light mode"
+        title="Toggle dark/light mode"
+      >
+        <span class="theme-icon" aria-hidden="true"></span>
+      </button>
+    </div>
+    <h1 class="demo-title">AES Modes</h1>
+    <p class="demo-subtitle">How mode choice dramatically affects security properties</p>
+    <div class="primitive-chips" role="list" aria-label="Cryptographic primitives used">
+      <span class="chip" role="listitem">AES-128</span>
+      <span class="chip" role="listitem">AES-256</span>
+      <span class="chip" role="listitem">GCM</span>
+      <span class="chip" role="listitem">CBC</span>
+      <span class="chip" role="listitem">CTR</span>
+      <span class="chip" role="listitem">ECB</span>
+      <span class="chip" role="listitem">CCM</span>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Why This Matters -->
+    <section class="why-matters" aria-labelledby="why-heading">
+      <h2 id="why-heading">Why This Matters</h2>
+      <p>Mode choice is the most commonly misunderstood AES decision. ECB mode is <em>still</em> found in production systems in 2026. Choosing the wrong mode can render AES encryption completely ineffective — leaking plaintext structure, enabling bit-flip attacks, or allowing full plaintext recovery through padding oracles.</p>
+    </section>
+
+    <!-- Mode Selector -->
+    <nav class="mode-selector" role="tablist" aria-label="AES mode panels">
+      <button role="tab" class="mode-tab" id="tab-ecb" aria-controls="panel-ecb" aria-selected="true" data-mode="ecb">
+        <span class="tab-label">ECB</span>
+        <span class="status-chip status-avoid" aria-label="Status: Avoid">AVOID</span>
+      </button>
+      <button role="tab" class="mode-tab" id="tab-cbc" aria-controls="panel-cbc" aria-selected="false" data-mode="cbc">
+        <span class="tab-label">CBC</span>
+        <span class="status-chip status-legacy" aria-label="Status: Legacy">LEGACY</span>
+      </button>
+      <button role="tab" class="mode-tab" id="tab-ctr" aria-controls="panel-ctr" aria-selected="false" data-mode="ctr">
+        <span class="tab-label">CTR</span>
+        <span class="status-chip status-acceptable" aria-label="Status: Acceptable">OK</span>
+      </button>
+      <button role="tab" class="mode-tab" id="tab-gcm" aria-controls="panel-gcm" aria-selected="false" data-mode="gcm">
+        <span class="tab-label">GCM</span>
+        <span class="status-chip status-recommended" aria-label="Status: Recommended">REC</span>
+      </button>
+      <button role="tab" class="mode-tab" id="tab-ccm" aria-controls="panel-ccm" aria-selected="false" data-mode="ccm">
+        <span class="tab-label">CCM</span>
+        <span class="status-chip status-acceptable" aria-label="Status: Acceptable">OK</span>
+      </button>
+      <button role="tab" class="mode-tab" id="tab-oracle" aria-controls="panel-oracle" aria-selected="false" data-mode="oracle">
+        <span class="tab-label">Oracle</span>
+        <span class="status-chip status-attack" aria-label="Status: Attack Demo">ATK</span>
+      </button>
+    </nav>
+
+    <!-- Panel: ECB -->
+    <section role="tabpanel" id="panel-ecb" class="mode-panel" aria-labelledby="tab-ecb">
+      <div class="panel-header">
+        <h2>ECB: The Dangerous Default</h2>
+        <span class="status-chip status-avoid" aria-label="Status: Avoid — Never use for multi-block data">AVOID</span>
+      </div>
+      <p class="panel-desc">Electronic Codebook mode encrypts each block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking the structure of the message. As defined in <strong>NIST SP 800-38A</strong>, ECB should never be used for multi-block data.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="ecb-plaintext">Plaintext</label>
+          <textarea id="ecb-plaintext" rows="3" placeholder="Enter plaintext (repeated patterns reveal ECB weakness)…" aria-describedby="ecb-plaintext-hint"></textarea>
+          <span id="ecb-plaintext-hint" class="hint">Try repeating a 16-character block, e.g. "YELLOW SUBMARINE" twice.</span>
+        </div>
+        <div class="input-group">
+          <label for="ecb-image-upload">Or upload a small image</label>
+          <input type="file" id="ecb-image-upload" accept="image/*" aria-describedby="ecb-image-hint">
+          <span id="ecb-image-hint" class="hint">Upload a BMP or small PNG to see the ECB penguin effect.</span>
+        </div>
+        <button id="ecb-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with ECB mode">Encrypt with ECB</button>
+      </div>
+
+      <div class="demo-output" aria-live="polite">
+        <div class="output-group">
+          <h3>Key <span class="hex-label">(hex)</span></h3>
+          <output id="ecb-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Ciphertext <span class="hex-label">(hex)</span></h3>
+          <output id="ecb-ciphertext" class="hex-output" aria-label="ECB ciphertext in hexadecimal"></output>
+        </div>
+        <div class="block-viz" id="ecb-blocks" aria-label="ECB block visualization — identical colors indicate identical ciphertext blocks">
+          <h3>Block Comparison</h3>
+          <div class="block-grid" id="ecb-block-grid" role="img" aria-label="Visual block comparison"></div>
+          <p class="block-legend"><span class="legend-same" aria-hidden="true">■</span> Same color = identical ciphertext block (structure leaked) <span class="legend-diff" aria-hidden="true">■</span> Different color = different ciphertext block</p>
+        </div>
+        <div class="image-comparison" id="ecb-image-output" hidden>
+          <h3>ECB Penguin Effect</h3>
+          <div class="image-grid">
+            <div>
+              <h4>Original</h4>
+              <canvas id="ecb-canvas-original" aria-label="Original image"></canvas>
+            </div>
+            <div>
+              <h4>ECB Encrypted</h4>
+              <canvas id="ecb-canvas-encrypted" aria-label="ECB encrypted image showing pattern leakage"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <h3>Why ECB Is Never Appropriate</h3>
+        <p>ECB encrypts each 16-byte block independently. This means repeated plaintext blocks always produce repeated ciphertext blocks. An attacker learns <em>where</em> repetition occurs — destroying confidentiality for structured data like images, database fields, or protocol messages.</p>
+        <p><strong>Implementation note:</strong> WebCrypto does not support ECB natively. This demo implements ECB by encrypting each 16-byte block individually using AES-CBC with a zero IV, which for a single block is equivalent to ECB encryption. This approach is documented honestly — ECB is shown only to demonstrate why it must be avoided.</p>
+      </div>
+    </section>
+
+    <!-- Panel: CBC -->
+    <section role="tabpanel" id="panel-cbc" class="mode-panel" aria-labelledby="tab-cbc" hidden>
+      <div class="panel-header">
+        <h2>CBC: The Classic Workhorse</h2>
+        <span class="status-chip status-legacy" aria-label="Status: Legacy — Use GCM instead">LEGACY</span>
+      </div>
+      <p class="panel-desc">Cipher Block Chaining mode XORs each plaintext block with the previous ciphertext block before encryption. As defined in <strong>NIST SP 800-38A</strong>, CBC requires a unique, unpredictable IV for each encryption and provides confidentiality but not integrity.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="cbc-plaintext">Plaintext</label>
+          <textarea id="cbc-plaintext" rows="3" placeholder="Enter plaintext…" aria-describedby="cbc-plaintext-hint"></textarea>
+          <span id="cbc-plaintext-hint" class="hint">Any text. We'll show block chaining and vulnerability demos.</span>
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label for="cbc-iv">IV <span class="hex-label">(hex, 32 chars)</span></label>
+            <input type="text" id="cbc-iv" maxlength="32" placeholder="Leave empty for random IV" aria-describedby="cbc-iv-hint">
+            <span id="cbc-iv-hint" class="hint">Provide a hex IV or leave blank for a random one.</span>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button id="cbc-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CBC mode">Encrypt with CBC</button>
+          <button id="cbc-iv-reuse-btn" class="btn btn-secondary" aria-label="Demonstrate IV reuse vulnerability" disabled>Demo: IV Reuse</button>
+          <button id="cbc-bitflip-btn" class="btn btn-secondary" aria-label="Demonstrate bit-flip attack" disabled>Demo: Bit-Flip</button>
+        </div>
+      </div>
+
+      <div class="demo-output" aria-live="polite">
+        <div class="output-group">
+          <h3>Key <span class="hex-label">(hex)</span></h3>
+          <output id="cbc-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>IV <span class="hex-label">(hex)</span></h3>
+          <output id="cbc-iv-output" class="hex-output" aria-label="Initialization vector in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Ciphertext <span class="hex-label">(hex)</span></h3>
+          <output id="cbc-ciphertext" class="hex-output" aria-label="CBC ciphertext in hexadecimal"></output>
+        </div>
+        <div class="block-viz" id="cbc-chain-viz">
+          <h3>Block Chaining Visualization</h3>
+          <div id="cbc-chain-blocks" class="chain-blocks" role="img" aria-label="CBC block chaining — each ciphertext block feeds into the next encryption"></div>
+        </div>
+        <div id="cbc-vuln-output" class="vuln-output" hidden>
+          <h3 id="cbc-vuln-title">Vulnerability Demo</h3>
+          <div id="cbc-vuln-content" aria-labelledby="cbc-vuln-title" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <h3>CBC Vulnerabilities</h3>
+        <p><strong>IV reuse:</strong> Same plaintext + same IV + same key = identical ciphertext. The IV must be unpredictable for each encryption.</p>
+        <p><strong>Bit-flip attack:</strong> Flipping bit <em>i</em> of ciphertext block <em>n</em> flips bit <em>i</em> of plaintext block <em>n+1</em> — enabling controlled plaintext manipulation without knowing the key.</p>
+        <p><strong>No integrity:</strong> CBC provides confidentiality only. Without a MAC (e.g., HMAC in Encrypt-then-MAC), ciphertext tampering goes undetected. This is why AEAD modes like GCM replaced CBC.</p>
+      </div>
+    </section>
+
+    <!-- Panel: CTR -->
+    <section role="tabpanel" id="panel-ctr" class="mode-panel" aria-labelledby="tab-ctr" hidden>
+      <div class="panel-header">
+        <h2>CTR: Stream Mode</h2>
+        <span class="status-chip status-acceptable" aria-label="Status: Acceptable with strict nonce management">ACCEPTABLE</span>
+      </div>
+      <p class="panel-desc">Counter mode turns AES into a stream cipher by encrypting successive counter values to produce a keystream, then XORing with plaintext. As defined in <strong>NIST SP 800-38A</strong>, CTR requires a unique nonce/counter combination for every encryption — nonce reuse is catastrophic.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="ctr-plaintext">Plaintext Message 1</label>
+          <textarea id="ctr-plaintext" rows="2" placeholder="First message…"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="ctr-plaintext2">Plaintext Message 2 <span class="hint-inline">(for nonce reuse demo)</span></label>
+          <textarea id="ctr-plaintext2" rows="2" placeholder="Second message (same nonce)…"></textarea>
+        </div>
+        <div class="btn-row">
+          <button id="ctr-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CTR mode">Encrypt with CTR</button>
+          <button id="ctr-nonce-reuse-btn" class="btn btn-secondary" aria-label="Demonstrate nonce reuse attack" disabled>Demo: Nonce Reuse</button>
+        </div>
+      </div>
+
+      <div class="demo-output" aria-live="polite">
+        <div class="output-group">
+          <h3>Key <span class="hex-label">(hex)</span></h3>
+          <output id="ctr-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Counter/Nonce <span class="hex-label">(hex)</span></h3>
+          <output id="ctr-counter" class="hex-output" aria-label="Counter value in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Ciphertext 1 <span class="hex-label">(hex)</span></h3>
+          <output id="ctr-ciphertext" class="hex-output" aria-label="CTR ciphertext 1 in hexadecimal"></output>
+        </div>
+        <div class="block-viz" id="ctr-stream-viz">
+          <h3>Counter + Keystream Generation</h3>
+          <div id="ctr-stream-blocks" class="stream-blocks" role="img" aria-label="CTR mode counter blocks and keystream XOR"></div>
+        </div>
+        <div id="ctr-nonce-output" class="vuln-output" hidden>
+          <h3 id="ctr-nonce-title">Nonce Reuse Attack</h3>
+          <div id="ctr-nonce-content" aria-labelledby="ctr-nonce-title" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <h3>Nonce Discipline Is Everything</h3>
+        <p>If two messages are encrypted with the same key and nonce, XORing the two ciphertexts cancels out the keystream: C₁ ⊕ C₂ = P₁ ⊕ P₂. An attacker who knows (or guesses) one plaintext can recover the other. CTR is secure <em>only</em> when every (key, nonce) pair is unique.</p>
+      </div>
+    </section>
+
+    <!-- Panel: GCM -->
+    <section role="tabpanel" id="panel-gcm" class="mode-panel" aria-labelledby="tab-gcm" hidden>
+      <div class="panel-header">
+        <h2>GCM: Authenticated Encryption</h2>
+        <span class="status-chip status-recommended" aria-label="Status: Recommended default">RECOMMENDED</span>
+      </div>
+      <p class="panel-desc">Galois/Counter Mode combines CTR encryption with GHASH authentication. As defined in <strong>NIST SP 800-38D</strong>, GCM provides both confidentiality and authenticity, including authentication of Additional Authenticated Data (AAD). The nonce must never repeat with the same key.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="gcm-plaintext">Plaintext</label>
+          <textarea id="gcm-plaintext" rows="3" placeholder="Enter plaintext…"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="gcm-aad">Additional Authenticated Data (AAD)</label>
+          <input type="text" id="gcm-aad" placeholder="e.g. message header, metadata" aria-describedby="gcm-aad-hint">
+          <span id="gcm-aad-hint" class="hint">AAD is authenticated but not encrypted — protects metadata integrity.</span>
+        </div>
+        <div class="input-group">
+          <label for="gcm-tag-length">Tag Length (bits)</label>
+          <select id="gcm-tag-length" aria-describedby="gcm-tag-hint">
+            <option value="128" selected>128 (recommended)</option>
+            <option value="120">120</option>
+            <option value="112">112</option>
+            <option value="104">104</option>
+            <option value="96">96</option>
+          </select>
+          <span id="gcm-tag-hint" class="hint">Per NIST SP 800-38D §5.2.1.2, shorter tags reduce forgery resistance. 128-bit is recommended.</span>
+        </div>
+        <div class="btn-row">
+          <button id="gcm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with GCM mode">Encrypt with GCM</button>
+          <button id="gcm-tamper-btn" class="btn btn-secondary" aria-label="Demonstrate tampered ciphertext rejection" disabled>Demo: Tamper Detection</button>
+        </div>
+      </div>
+
+      <div class="demo-output" aria-live="polite">
+        <div class="output-group">
+          <h3>Key <span class="hex-label">(hex)</span></h3>
+          <output id="gcm-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Nonce <span class="hex-label">(hex, 12 bytes)</span></h3>
+          <output id="gcm-nonce" class="hex-output" aria-label="GCM nonce in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Ciphertext <span class="hex-label">(hex)</span></h3>
+          <output id="gcm-ciphertext" class="hex-output" aria-label="GCM ciphertext in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Auth Tag <span class="hex-label">(hex)</span></h3>
+          <output id="gcm-tag" class="hex-output" aria-label="Authentication tag in hexadecimal"></output>
+        </div>
+        <div id="gcm-tamper-output" class="vuln-output" hidden>
+          <h3 id="gcm-tamper-title">Tamper Detection</h3>
+          <div id="gcm-tamper-content" aria-labelledby="gcm-tamper-title" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <h3>Why GCM Is the Recommended Default</h3>
+        <p>GCM provides authenticated encryption — any modification to the ciphertext, AAD, nonce, or tag causes decryption to fail. This prevents bit-flip attacks, padding oracle attacks, and all forms of ciphertext tampering.</p>
+        <p><strong>Tag truncation:</strong> Per <strong>NIST SP 800-38D §5.2.1.2</strong>, truncating the authentication tag below 128 bits reduces the effort required for a forgery attack. A <em>t</em>-bit tag provides at most 2<sup>−t</sup> forgery probability per attempt. Tags shorter than 96 bits are not recommended.</p>
+      </div>
+    </section>
+
+    <!-- Panel: CCM -->
+    <section role="tabpanel" id="panel-ccm" class="mode-panel" aria-labelledby="tab-ccm" hidden>
+      <div class="panel-header">
+        <h2>CCM: Constrained Environments</h2>
+        <span class="status-chip status-acceptable" aria-label="Status: Acceptable for constrained environments">ACCEPTABLE</span>
+      </div>
+      <p class="panel-desc">Counter with CBC-MAC mode combines CTR encryption with CBC-MAC authentication. Defined in <strong>RFC 3610</strong> and <strong>NIST SP 800-38C</strong>, CCM is a two-pass AEAD mode suitable for constrained environments where code size and complexity matter.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="ccm-plaintext">Plaintext</label>
+          <textarea id="ccm-plaintext" rows="3" placeholder="Enter plaintext…"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="ccm-aad">Additional Authenticated Data (AAD)</label>
+          <input type="text" id="ccm-aad" placeholder="e.g. device ID, sequence number">
+        </div>
+        <button id="ccm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CCM mode">Encrypt with CCM</button>
+      </div>
+
+      <div class="demo-output" aria-live="polite">
+        <div class="output-group">
+          <h3>Key <span class="hex-label">(hex)</span></h3>
+          <output id="ccm-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Nonce <span class="hex-label">(hex)</span></h3>
+          <output id="ccm-nonce" class="hex-output" aria-label="CCM nonce in hexadecimal"></output>
+        </div>
+        <div class="output-group">
+          <h3>Ciphertext + Tag <span class="hex-label">(hex)</span></h3>
+          <output id="ccm-ciphertext" class="hex-output" aria-label="CCM ciphertext with authentication tag in hexadecimal"></output>
+        </div>
+        <div class="block-viz">
+          <h3>CCM vs GCM Comparison</h3>
+          <div class="comparison-table" role="table" aria-label="Comparison of CCM and GCM">
+            <div role="row" class="comp-header">
+              <span role="columnheader">Property</span>
+              <span role="columnheader">CCM</span>
+              <span role="columnheader">GCM</span>
+            </div>
+            <div role="row"><span role="cell">Passes</span><span role="cell">Two-pass</span><span role="cell">One-pass</span></div>
+            <div role="row"><span role="cell">MAC</span><span role="cell">CBC-MAC</span><span role="cell">GHASH</span></div>
+            <div role="row"><span role="cell">Encryption</span><span role="cell">CTR</span><span role="cell">CTR</span></div>
+            <div role="row"><span role="cell">Parallelizable</span><span role="cell">Partially</span><span role="cell">Yes</span></div>
+            <div role="row"><span role="cell">Use case</span><span role="cell">IoT, 802.15.4</span><span role="cell">TLS, general</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <h3>When to Use CCM</h3>
+        <p>CCM is specified in <strong>RFC 3610</strong> and used in IEEE 802.15.4 (Zigbee), Bluetooth Low Energy, and other constrained protocols. It uses only the AES block cipher — no dedicated hash or GHASH — making it suitable for hardware with minimal gate count.</p>
+        <p>For general-purpose applications, GCM is preferred due to its single-pass operation and hardware acceleration support (PCLMULQDQ/CLMUL instructions).</p>
+        <p><strong>Implementation note:</strong> WebCrypto does not support CCM. This demo implements CCM from AES block primitives using <a href="https://github.com/paulmillr/noble-ciphers" target="_blank" rel="noopener noreferrer">@noble/ciphers</a> ECB for single-block AES encryption, building CBC-MAC + CTR per RFC 3610.</p>
+      </div>
+    </section>
+
+    <!-- Panel: Padding Oracle -->
+    <section role="tabpanel" id="panel-oracle" class="mode-panel" aria-labelledby="tab-oracle" hidden>
+      <div class="panel-header">
+        <h2>Padding Oracle Attack</h2>
+        <span class="status-chip status-attack" aria-label="Attack demonstration">ATTACK DEMO</span>
+      </div>
+      <p class="panel-desc">A step-by-step demonstration of a CBC padding oracle attack. The oracle reveals only whether PKCS#7 padding is valid — yet this single bit of information is enough to recover the <em>entire plaintext</em>, one byte at a time.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="oracle-plaintext">Secret Plaintext</label>
+          <textarea id="oracle-plaintext" rows="2" placeholder="Enter a secret message (will be encrypted, then attacked)…" aria-describedby="oracle-plaintext-hint"></textarea>
+          <span id="oracle-plaintext-hint" class="hint">This will be CBC-encrypted. The oracle attack will recover it byte-by-byte using only padding validation.</span>
+        </div>
+        <div class="btn-row">
+          <button id="oracle-setup-btn" class="btn btn-primary" aria-label="Encrypt and set up oracle attack">Encrypt &amp; Setup Oracle</button>
+          <button id="oracle-run-btn" class="btn btn-secondary" aria-label="Run padding oracle attack step by step" disabled>Run Attack</button>
+          <button id="oracle-auto-btn" class="btn btn-secondary" aria-label="Auto-run padding oracle attack" disabled>Auto-Run</button>
+        </div>
+      </div>
+
+      <div class="demo-output" aria-live="polite">
+        <div class="output-group">
+          <h3>Target Ciphertext <span class="hex-label">(hex)</span></h3>
+          <output id="oracle-ciphertext" class="hex-output" aria-label="Target ciphertext in hexadecimal"></output>
+        </div>
+        <div class="oracle-viz" id="oracle-progress" hidden>
+          <h3>Attack Progress</h3>
+          <div class="oracle-stats" aria-live="polite">
+            <span>Block: <output id="oracle-block-num">-</output></span>
+            <span>Byte: <output id="oracle-byte-num">-</output></span>
+            <span>Queries: <output id="oracle-query-count">0</output></span>
+          </div>
+          <div class="oracle-grid" id="oracle-byte-grid" role="img" aria-label="Byte-by-byte recovery progress">
+          </div>
+          <div class="oracle-recovered">
+            <h4>Recovered Plaintext</h4>
+            <output id="oracle-recovered-text" class="hex-output recovered-text" aria-label="Recovered plaintext"></output>
+          </div>
+          <div class="oracle-log">
+            <h4>Oracle Query Log</h4>
+            <div id="oracle-log" class="log-scroll" role="log" aria-label="Padding oracle query log" aria-live="off"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <h3>Why This Attack Works</h3>
+        <p>PKCS#7 padding requires the last <em>n</em> bytes to all equal <em>n</em>. A padding oracle — any system that reveals whether padding is valid — leaks one plaintext byte per ~128 queries on average. Across 16 bytes per block, the entire plaintext is recovered using only ~2,048 oracle queries per block.</p>
+        <p><strong>Defense:</strong> Use authenticated encryption (GCM, CCM, ChaCha20-Poly1305). If CBC is unavoidable, use Encrypt-then-MAC and verify the MAC <em>before</em> attempting decryption — never reveal padding validity.</p>
+        <p>See also: <a href="https://systemslibrarian.github.io/crypto-lab-shadow-vault/" target="_blank" rel="noopener noreferrer">crypto-lab-shadow-vault</a> for ChaCha20-Poly1305 AEAD.</p>
+      </div>
+    </section>
+
+    <!-- Cross-links -->
+    <section class="cross-links" aria-label="Related demos">
+      <h2>Related Demos</h2>
+      <div class="badge-row" role="list">
+        <a class="cross-badge" role="listitem" href="https://systemslibrarian.github.io/crypto-lab-iron-letter/" target="_blank" rel="noopener noreferrer" aria-label="crypto-lab-iron-letter: AES encryption demo">
+          crypto-lab-iron-letter
+        </a>
+        <a class="cross-badge" role="listitem" href="https://systemslibrarian.github.io/crypto-lab-shadow-vault/" target="_blank" rel="noopener noreferrer" aria-label="crypto-lab-shadow-vault: ChaCha20-Poly1305 AEAD demo">
+          crypto-lab-shadow-vault
+        </a>
+        <a class="cross-badge" role="listitem" href="https://systemslibrarian.github.io/crypto-lab-iron-serpent/" target="_blank" rel="noopener noreferrer" aria-label="crypto-lab-iron-serpent: Serpent cipher demo">
+          crypto-lab-iron-serpent
+        </a>
+        <a class="cross-badge" role="listitem" href="https://systemslibrarian.github.io/crypto-compare/" target="_blank" rel="noopener noreferrer" aria-label="crypto-compare: Symmetric cipher comparison">
+          crypto-compare — Symmetric
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <p class="scripture">"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31</p>
+    <a
+      class="github-badge"
+      href="https://github.com/systemslibrarian/crypto-lab-aes-modes"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="View source on GitHub"
+    >
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </footer>
+
+  <div id="error-region" class="sr-only" aria-live="assertive" role="alert"></div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
