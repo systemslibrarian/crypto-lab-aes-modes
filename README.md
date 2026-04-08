@@ -8,68 +8,39 @@ An interactive, browser-based demonstration of AES block cipher modes of operati
 
 ---
 
-## Overview
+## 1. What It Is
 
-This demo lets you encrypt data with five different AES modes side-by-side and see exactly how each mode behaves — including their vulnerabilities. All cryptographic operations use the **WebCrypto API** for real AES encryption (no simulated math, no pure-JS reimplementations). CCM mode uses [@noble/ciphers](https://github.com/paulmillr/noble-ciphers) since WebCrypto does not support CCM natively.
+This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, along with a live CBC padding oracle attack. AES is a **symmetric** block cipher, and the mode determines whether you get confidentiality only (`ECB`, `CBC`, `CTR`) or authenticated encryption (`GCM`, `CCM`). These modes solve the practical problem of encrypting messages longer than one block while handling IVs/nonces and, in the AEAD cases, integrity for ciphertext and `AAD`. The demo is educational: it shows real behavior and failure cases, but it is not a new cryptographic protocol.
 
-## Modes Covered
+## 2. When to Use It
 
-| Mode | Status | Description |
-|------|--------|-------------|
-| **ECB** | 🔴 AVOID | Electronic Codebook — identical blocks produce identical ciphertext (NIST SP 800-38A) |
-| **CBC** | 🟡 LEGACY | Cipher Block Chaining — classic mode, vulnerable to padding oracle and bit-flip attacks (NIST SP 800-38A) |
-| **CTR** | 🟢 ACCEPTABLE | Counter mode — stream cipher construction, catastrophic on nonce reuse (NIST SP 800-38A) |
-| **GCM** | 🟢 RECOMMENDED | Galois/Counter Mode — authenticated encryption with AAD (NIST SP 800-38D) |
-| **CCM** | 🟢 ACCEPTABLE | Counter with CBC-MAC — two-pass AEAD for constrained environments (RFC 3610, NIST SP 800-38C) |
-| **Padding Oracle** | ⚔️ ATTACK | Live CBC padding oracle attack — recovers plaintext using only padding validity responses |
+- **Use `GCM` for general-purpose application and transport encryption.** It gives confidentiality and authenticity together, which is why the demo marks it as the recommended default.
+- **Use `CCM` in constrained or embedded environments that already standardize on it.** The code and UI describe it as a two-pass AEAD mode suited to low-power protocols.
+- **Use `CTR` only when you can guarantee a unique counter/nonce and add separate integrity protection.** It behaves like a stream cipher and fails badly if a nonce is ever reused.
+- **Use `CBC` only for legacy interoperability, with an unpredictable `IV` and Encrypt-then-MAC.** The demo shows that confidentiality alone is not enough.
+- **Do not use `ECB` for multi-block data.** Repeated plaintext blocks remain repeated in the ciphertext and leak structure.
 
-## Primitives Used
+## 3. Live Demo
 
-- **AES-128** — ECB panel (via AES-CBC with zero IV for single-block ECB equivalence)
-- **AES-256** — CBC, CTR, GCM panels (WebCrypto)
-- **AES-128-CCM** — CCM panel (@noble/ciphers)
-- **PKCS#7 padding** — CBC and padding oracle panels
-- **GHASH** — GCM authentication tag computation
-- **CBC-MAC** — CCM authentication
+**[▶ Live Demo](https://systemslibrarian.github.io/crypto-lab-aes-modes/)**
 
-## Running Locally
+The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, then inspect the resulting key, `IV`/nonce, ciphertext, and authentication data where applicable. It also includes an image upload for the ECB pattern-leakage demo, a manual `IV` input for CBC, a two-message nonce reuse setup for CTR, `AAD` and `Tag Length (bits)` controls for GCM, and step-by-step controls for the padding oracle attack. It demonstrates encryption, tamper detection, and attack behavior rather than a general-purpose decrypt workflow.
 
-```bash
-git clone https://github.com/systemslibrarian/crypto-lab-aes-modes.git
-cd crypto-lab-aes-modes
-npm install
-npm run dev
-```
+## 4. What Can Go Wrong
 
-Open [http://localhost:5173/crypto-lab-aes-modes/](http://localhost:5173/crypto-lab-aes-modes/) in your browser.
+- **`ECB` pattern leakage:** identical plaintext blocks encrypt to identical ciphertext blocks, so message structure remains visible.
+- **CBC padding oracle exposure:** if a system reveals whether `PKCS#7` padding is valid, an attacker can recover the plaintext byte by byte.
+- **CBC bit-flipping:** without authentication, modifying one ciphertext block predictably changes bits in the next plaintext block.
+- **`CTR` or `GCM` nonce reuse:** reusing the same `(key, nonce)` pair leaks relationships between messages, and in GCM can enable forgery attacks.
+- **GCM tag truncation:** shorter authentication tags reduce forgery resistance, which is why the UI marks 128-bit tags as the recommended choice.
 
-## Security Notes
+## 5. Real-World Usage
 
-- **ECB is never safe for multi-block data.** Identical plaintext blocks always produce identical ciphertext blocks, leaking message structure.
-- **CBC requires Encrypt-then-MAC.** Without integrity protection, CBC is vulnerable to padding oracle attacks that recover the entire plaintext.
-- **GCM nonce must never repeat.** Nonce reuse with GCM allows forgery attacks and key recovery via the GHASH polynomial.
-- **GCM tag truncation** reduces forgery resistance — per NIST SP 800-38D §5.2.1.2, tags shorter than 96 bits are not recommended.
-- **CTR nonce reuse** is catastrophic — XORing two ciphertexts encrypted with the same nonce yields the XOR of the plaintexts.
-
-> **ECB implementation note:** WebCrypto does not support ECB natively. This demo implements ECB by encrypting each 16-byte block individually using AES-CBC with a zero IV, which for a single block is mathematically equivalent to ECB encryption.
-
-## Accessibility
-
-This demo targets **WCAG 2.1 AA** compliance:
-
-- All interactive elements have descriptive ARIA labels
-- Full keyboard navigation — logical tab order, no keyboard traps
-- Arrow key navigation within tab bar (Home/End supported)
-- Visible focus indicators in both dark and light modes (minimum 3:1 contrast ratio)
-- Status chips have text equivalents — color is never the sole indicator
-- Animations respect `prefers-reduced-motion`
-- Error states announced via `aria-live` regions
-- Minimum 4.5:1 contrast ratio for normal text, 3:1 for large text
-- Screen reader navigable throughout
-
-## Why This Matters
-
-Mode choice is the most commonly misunderstood AES decision. ECB mode is *still* found in production systems in 2026. Choosing the wrong mode can render AES encryption completely ineffective — leaking plaintext structure, enabling bit-flip attacks, or allowing full plaintext recovery through padding oracles.
+- **TLS 1.2 / TLS 1.3:** AES-GCM protects application records in mainstream HTTPS deployments.
+- **QUIC / HTTP/3:** AES-GCM is one of the standard AEAD choices for packet protection.
+- **WPA2/WPA3 (`CCMP`):** Wi-Fi uses AES-CCM to encrypt and authenticate data frames.
+- **Bluetooth Low Energy:** BLE uses AES-CCM at the link layer for confidentiality and message authentication.
+- **Zigbee / IEEE 802.15.4:** low-power mesh networking standards use the CCM family for authenticated encryption.
 
 ## Related Demos
 

@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Interactive demonstration of AES block cipher modes — ECB, CBC, CTR, GCM, CCM — with live padding oracle attack.">
   <title>AES Modes — crypto-lab</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem('theme');
+      document.documentElement.setAttribute('data-theme', saved ?? 'dark');
+    })();
+  </script>
   <link rel="stylesheet" href="./styles/main.css">
 </head>
 <body>
@@ -13,16 +19,15 @@
   <header class="site-header" role="banner">
     <div class="header-top">
       <span class="category-chip" aria-label="Category: Block Cipher Modes">Block Cipher Modes</span>
-      <button
-        id="theme-toggle"
-        type="button"
-        class="theme-toggle"
-        aria-label="Toggle dark/light mode"
-        title="Toggle dark/light mode"
-      >
-        <span class="theme-icon" aria-hidden="true"></span>
-      </button>
     </div>
+    <button
+      id="theme-toggle"
+      type="button"
+      class="theme-toggle"
+      style="position: absolute; top: 0; right: 0;"
+      aria-label="Switch to light mode"
+      title="Switch to light mode"
+    >🌙</button>
     <h1 class="demo-title">AES Modes</h1>
     <p class="demo-subtitle">How mode choice dramatically affects security properties</p>
     <div class="primitive-chips" role="list" aria-label="Cryptographic primitives used">

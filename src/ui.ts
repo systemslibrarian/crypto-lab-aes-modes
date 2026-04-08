@@ -1,7 +1,7 @@
 /**
  * ui.ts — Panel controller and shared utilities
  *
- * Handles tab navigation, theme toggle, and shared helper functions
+ * Handles tab navigation and shared helper functions
  * used across all mode modules.
  */
 
@@ -46,7 +46,7 @@ export function aesEncrypt(
   key: CryptoKey,
   data: Uint8Array
 ): Promise<ArrayBuffer> {
-  return crypto.subtle.encrypt(algorithm, key, data);
+  return crypto.subtle.encrypt(algorithm, key, data as BufferSource);
 }
 
 export function aesDecrypt(
@@ -54,7 +54,7 @@ export function aesDecrypt(
   key: CryptoKey,
   data: Uint8Array
 ): Promise<ArrayBuffer> {
-  return crypto.subtle.decrypt(algorithm, key, data);
+  return crypto.subtle.decrypt(algorithm, key, data as BufferSource);
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -82,28 +82,6 @@ export function announceError(msg: string): void {
     }, 5000);
   }
   console.error(msg);
-}
-
-// ─── Theme toggle ───
-
-export function initThemeToggle(): void {
-  const btn = document.getElementById('theme-toggle') as HTMLButtonElement;
-  if (!btn) return;
-
-  // Check saved preference or system preference
-  const saved = localStorage.getItem('crypto-lab-theme');
-  if (saved) {
-    document.documentElement.setAttribute('data-theme', saved);
-  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-
-  btn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('crypto-lab-theme', next);
-  });
 }
 
 // ─── Tab controller ───

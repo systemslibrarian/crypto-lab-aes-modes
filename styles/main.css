@@ -130,6 +130,7 @@ body {
 
 /* ---------- Header ---------- */
 .site-header {
+  position: relative;
   text-align: center;
   padding: 1.5rem 1rem 1rem;
   border-bottom: 1px solid var(--border);
@@ -174,26 +175,25 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin: 0.75rem;
   border: 2px solid var(--border);
   border-radius: 50%;
-  background: var(--bg);
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition);
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
 }
 
 .theme-toggle:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
   border-color: var(--accent);
-}
-
-.theme-icon::before {
-  content: '☀️';
-  font-size: 1.25rem;
-}
-
-[data-theme="dark"] .theme-icon::before {
-  content: '🌙';
+  transform: translateY(-1px);
 }
 
 /* ---------- Primitive chips ---------- */
