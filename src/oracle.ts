@@ -47,10 +47,23 @@ async function setupTarget(plaintext: Uint8Array): Promise<{
   return { key, iv, ciphertext: new Uint8Array(ct) };
 }
 
+export interface ByteRecoveredMath {
+  guess: number;
+  padValue: number;
+  intermediate: number;
+  prevByte: number;
+}
+
 export interface OracleCallbacks {
   onByteStart: (blockIdx: number, byteIdx: number) => void;
   onQuery: (queryNum: number, guess: number, valid: boolean) => void;
-  onByteRecovered: (blockIdx: number, byteIdx: number, value: number, char: string) => void;
+  onByteRecovered: (
+    blockIdx: number,
+    byteIdx: number,
+    value: number,
+    char: string,
+    math: ByteRecoveredMath
+  ) => void;
   onBlockComplete: (blockIdx: number, plaintext: Uint8Array) => void;
   onComplete: (fullPlaintext: Uint8Array) => void;
 }
@@ -121,7 +134,12 @@ async function attackBlock(
         const char = plaintext[bytePos] >= 32 && plaintext[bytePos] < 127
           ? String.fromCharCode(plaintext[bytePos])
           : '.';
-        callbacks.onByteRecovered(blockIdx, bytePos, plaintext[bytePos], char);
+        callbacks.onByteRecovered(blockIdx, bytePos, plaintext[bytePos], char, {
+          guess,
+          padValue,
+          intermediate: intermediate[bytePos],
+          prevByte: prevBlock[bytePos],
+        });
         found = true;
         break;
       }
@@ -187,6 +205,8 @@ export function mountOraclePanel(): void {
   const byteGrid = document.getElementById('oracle-byte-grid') as HTMLElement;
   const recoveredOut = document.getElementById('oracle-recovered-text') as HTMLElement;
   const logEl = document.getElementById('oracle-log') as HTMLElement;
+  const mathBox = document.getElementById('oracle-math') as HTMLElement;
+  const mathContent = document.getElementById('oracle-math-content') as HTMLElement;
 
   let attackKey: CryptoKey | null = null;
   let attackIV: Uint8Array | null = null;
@@ -253,7 +273,7 @@ export function mountOraclePanel(): void {
         logEl.scrollTop = logEl.scrollHeight;
       }
     },
-    onByteRecovered(blockIdx, byteIdx, value, char) {
+    onByteRecovered(blockIdx, byteIdx, value, char, math) {
       const globalIdx = blockIdx * BLOCK_SIZE + byteIdx;
       const cell = document.getElementById(`oracle-byte-${globalIdx}`);
       if (cell) {
@@ -261,6 +281,14 @@ export function mountOraclePanel(): void {
         cell.textContent = value.toString(16).padStart(2, '0');
         cell.setAttribute('aria-label', `Byte ${globalIdx}: recovered as 0x${value.toString(16).padStart(2, '0')} (${char})`);
       }
+      const hex2 = (n: number) => n.toString(16).padStart(2, '0');
+      mathBox.hidden = false;
+      mathContent.innerHTML =
+        `block ${blockIdx} byte ${byteIdx}: ` +
+        `guess=0x${hex2(math.guess)} produced valid padding (pad=0x${hex2(math.padValue)}). ` +
+        `<br>intermediate = guess ⊕ pad = 0x${hex2(math.guess)} ⊕ 0x${hex2(math.padValue)} = 0x${hex2(math.intermediate)}. ` +
+        `<br>plaintext = intermediate ⊕ prev[${byteIdx}] = 0x${hex2(math.intermediate)} ⊕ 0x${hex2(math.prevByte)} = ` +
+        `<strong>0x${hex2(value)}</strong> ("${char}").`;
     },
     onBlockComplete(blockIdx, plaintext) {
       const text = bytesToText(plaintext);

@@ -48,6 +48,37 @@
       <p>Mode choice is the most commonly misunderstood AES decision. ECB mode is <em>still</em> found in production systems in 2026. Choosing the wrong mode can render AES encryption completely ineffective — leaking plaintext structure, enabling bit-flip attacks, or allowing full plaintext recovery through padding oracles.</p>
     </section>
 
+    <!-- Decision Tree -->
+    <section class="decision-tree" aria-labelledby="decision-heading">
+      <h2 id="decision-heading">Which mode should I use?</h2>
+      <ol class="decision-list">
+        <li>
+          <strong>General-purpose / HTTPS / app data?</strong>
+          <span class="decision-arrow">→</span>
+          <span class="decision-pick decision-rec">AES-GCM</span>
+          <span class="decision-note">AEAD, fast, hardware-accelerated</span>
+        </li>
+        <li>
+          <strong>Constrained device / IoT / 802.15.4 / BLE?</strong>
+          <span class="decision-arrow">→</span>
+          <span class="decision-pick decision-ok">AES-CCM</span>
+          <span class="decision-note">AEAD, small code footprint</span>
+        </li>
+        <li>
+          <strong>Legacy interop only, and you can add a MAC?</strong>
+          <span class="decision-arrow">→</span>
+          <span class="decision-pick decision-legacy">AES-CBC + HMAC (Encrypt-then-MAC)</span>
+          <span class="decision-note">never CBC alone</span>
+        </li>
+        <li>
+          <strong>Multi-block data with <span data-term="ECB" class="glossary">ECB</span>?</strong>
+          <span class="decision-arrow">→</span>
+          <span class="decision-pick decision-avoid">NEVER</span>
+          <span class="decision-note">leaks structure (see the penguin)</span>
+        </li>
+      </ol>
+    </section>
+
     <!-- Mode Selector -->
     <nav class="mode-selector" role="tablist" aria-label="AES mode panels">
       <button role="tab" class="mode-tab" id="tab-ecb" aria-controls="panel-ecb" aria-selected="true" data-mode="ecb">
@@ -70,6 +101,10 @@
         <span class="tab-label">CCM</span>
         <span class="status-chip status-acceptable" aria-label="Status: Acceptable">OK</span>
       </button>
+      <button role="tab" class="mode-tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false" data-mode="compare">
+        <span class="tab-label">Compare</span>
+        <span class="status-chip status-compare" aria-label="Side-by-side comparison">vs</span>
+      </button>
       <button role="tab" class="mode-tab" id="tab-oracle" aria-controls="panel-oracle" aria-selected="false" data-mode="oracle">
         <span class="tab-label">Oracle</span>
         <span class="status-chip status-attack" aria-label="Status: Attack Demo">ATK</span>
@@ -82,7 +117,7 @@
         <h2>ECB: The Dangerous Default</h2>
         <span class="status-chip status-avoid" aria-label="Status: Avoid — Never use for multi-block data">AVOID</span>
       </div>
-      <p class="panel-desc">Electronic Codebook mode encrypts each block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking the structure of the message. As defined in <strong>NIST SP 800-38A</strong>, ECB should never be used for multi-block data.</p>
+      <p class="panel-desc">Electronic Codebook mode encrypts each block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking the structure of the message. As defined in <strong>NIST SP 800-38A</strong>, <span data-term="ECB" class="glossary">ECB</span> should never be used for multi-block data.</p>
 
       <div class="demo-controls">
         <div class="input-group">
@@ -94,6 +129,12 @@
           <label for="ecb-image-upload">Or upload a small image</label>
           <input type="file" id="ecb-image-upload" accept="image/*" aria-describedby="ecb-image-hint">
           <span id="ecb-image-hint" class="hint">Upload a BMP or small PNG to see the ECB penguin effect.</span>
+        </div>
+        <div class="predict-prompt">
+          <span class="predict-label">Predict:</span>
+          If you encrypt "YELLOW SUBMARINEYELLOW SUBMARINE", will ciphertext blocks 0 and 1 be identical?
+          <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
+          <span class="predict-answer">Yes — and that's exactly why ECB is broken. ECB has no chaining, no IV, no randomization. Identical input blocks always produce identical ciphertext blocks under the same key.</span>
         </div>
         <button id="ecb-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with ECB mode">Encrypt with ECB</button>
       </div>
@@ -112,6 +153,10 @@
           <div class="block-grid" id="ecb-block-grid" role="img" aria-label="Visual block comparison"></div>
           <p class="block-legend"><span class="legend-same" aria-hidden="true">■</span> Same color = identical ciphertext block (structure leaked) <span class="legend-diff" aria-hidden="true">■</span> Different color = different ciphertext block</p>
         </div>
+        <div class="math-overlay" id="ecb-math" hidden>
+          <h3>Block-level math</h3>
+          <div class="math-rows" id="ecb-math-rows"></div>
+        </div>
         <div class="image-comparison" id="ecb-image-output" hidden>
           <h3>ECB Penguin Effect</h3>
           <div class="image-grid">
@@ -127,10 +172,58 @@
         </div>
       </div>
 
+      <!-- Decrypt demo -->
+      <div class="decrypt-section" id="ecb-decrypt-section" hidden>
+        <h3>Decrypt</h3>
+        <p class="decrypt-hint">Try decrypting with the correct key vs. tampered ciphertext. ECB has <strong>no integrity check</strong> — tampered ciphertext decrypts without error.</p>
+        <div class="btn-row">
+          <button id="ecb-decrypt-btn" class="btn btn-secondary">Decrypt (correct key)</button>
+          <button id="ecb-decrypt-tamper-btn" class="btn btn-secondary">Decrypt (after flipping 1 ciphertext block)</button>
+        </div>
+        <div class="decrypt-output" id="ecb-decrypt-output" hidden></div>
+      </div>
+
+      <!-- Threat model -->
+      <div class="threat-grid" aria-label="ECB threat model">
+        <div class="threat-col threat-can">
+          <h4>An attacker who sees the ciphertext CAN</h4>
+          <ul>
+            <li>See which plaintext blocks repeat (block-equality leak)</li>
+            <li>Recognize known images, templates, or protocol structure</li>
+            <li>Splice or reorder ciphertext blocks without detection</li>
+          </ul>
+        </div>
+        <div class="threat-col threat-cannot">
+          <h4>An attacker CANNOT</h4>
+          <ul>
+            <li>Decrypt a single random block without the key (still AES)</li>
+            <li>Recover the AES key from ciphertext alone</li>
+          </ul>
+        </div>
+      </div>
+
       <div class="explainer">
         <h3>Why ECB Is Never Appropriate</h3>
         <p>ECB encrypts each 16-byte block independently. This means repeated plaintext blocks always produce repeated ciphertext blocks. An attacker learns <em>where</em> repetition occurs — destroying confidentiality for structured data like images, database fields, or protocol messages.</p>
+        <p><strong>Real-world incidents:</strong>
+          the famous <a href="https://blog.filippo.io/the-ecb-penguin/" target="_blank" rel="noopener noreferrer">ECB penguin</a> illustrates the leak;
+          early WEP and several enterprise SSO cookies have shipped ECB and been broken in production.</p>
         <p><strong>Implementation note:</strong> WebCrypto does not support ECB natively. This demo implements ECB by encrypting each 16-byte block individually using AES-CBC with a zero IV, which for a single block is equivalent to ECB encryption. This approach is documented honestly — ECB is shown only to demonstrate why it must be avoided.</p>
+      </div>
+
+      <!-- Self check -->
+      <div class="quiz-card"
+           data-correct="b"
+           data-why-correct="ECB leaks the equality structure of plaintext blocks. Same block in → same block out. CBC/CTR/GCM all randomize via IV/nonce."
+           data-why-wrong="Look again. Each ECB block is encrypted independently with no chaining or randomization — so identical plaintext blocks must produce identical ciphertext blocks.">
+        <h4>Self-check</h4>
+        <p>Which property of ECB lets the penguin silhouette survive encryption?</p>
+        <label><input type="radio" name="q-ecb" value="a"> AES rounds aren't strong enough on small inputs.</label>
+        <label><input type="radio" name="q-ecb" value="b"> Identical plaintext blocks produce identical ciphertext blocks.</label>
+        <label><input type="radio" name="q-ecb" value="c"> The IV was chosen poorly.</label>
+        <label><input type="radio" name="q-ecb" value="d"> The pixel format was leaked separately.</label>
+        <button type="button" class="btn btn-secondary quiz-check">Check</button>
+        <div class="quiz-explain" hidden></div>
       </div>
     </section>
 
@@ -140,7 +233,7 @@
         <h2>CBC: The Classic Workhorse</h2>
         <span class="status-chip status-legacy" aria-label="Status: Legacy — Use GCM instead">LEGACY</span>
       </div>
-      <p class="panel-desc">Cipher Block Chaining mode XORs each plaintext block with the previous ciphertext block before encryption. As defined in <strong>NIST SP 800-38A</strong>, CBC requires a unique, unpredictable IV for each encryption and provides confidentiality but not integrity.</p>
+      <p class="panel-desc">Cipher Block Chaining mode XORs each plaintext block with the previous ciphertext block before encryption. As defined in <strong>NIST SP 800-38A</strong>, CBC requires a unique, unpredictable <span data-term="IV" class="glossary">IV</span> for each encryption and provides confidentiality but not integrity.</p>
 
       <div class="demo-controls">
         <div class="input-group">
@@ -155,10 +248,17 @@
             <span id="cbc-iv-hint" class="hint">Provide a hex IV or leave blank for a random one.</span>
           </div>
         </div>
+        <div class="predict-prompt">
+          <span class="predict-label">Predict:</span>
+          If you flip ONE bit of CBC ciphertext byte 0, how many bytes of plaintext will be garbled on decryption?
+          <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
+          <span class="predict-answer">A whole 16-byte block — block 1 — gets completely garbled. Block 0 changes by exactly the same bit. That bit-flip-with-block-garble is the basis of the CBC bit-flip attack.</span>
+        </div>
         <div class="btn-row">
           <button id="cbc-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CBC mode">Encrypt with CBC</button>
           <button id="cbc-iv-reuse-btn" class="btn btn-secondary" aria-label="Demonstrate IV reuse vulnerability" disabled>Demo: IV Reuse</button>
           <button id="cbc-bitflip-btn" class="btn btn-secondary" aria-label="Demonstrate bit-flip attack" disabled>Demo: Bit-Flip</button>
+          <button id="cbc-targeted-btn" class="btn btn-secondary" aria-label="Targeted bit-flip puzzle">Demo: Targeted Bit-Flip (admin=0 → admin=1)</button>
         </div>
       </div>
 
@@ -179,9 +279,47 @@
           <h3>Block Chaining Visualization</h3>
           <div id="cbc-chain-blocks" class="chain-blocks" role="img" aria-label="CBC block chaining — each ciphertext block feeds into the next encryption"></div>
         </div>
+        <div class="math-overlay" id="cbc-math" hidden>
+          <h3>Block-level math</h3>
+          <div class="math-rows" id="cbc-math-rows"></div>
+        </div>
         <div id="cbc-vuln-output" class="vuln-output" hidden>
           <h3 id="cbc-vuln-title">Vulnerability Demo</h3>
           <div id="cbc-vuln-content" aria-labelledby="cbc-vuln-title" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- Decrypt demo -->
+      <div class="decrypt-section" id="cbc-decrypt-section" hidden>
+        <h3>Decrypt</h3>
+        <p class="decrypt-hint">CBC needs the same key AND the same <span data-term="IV" class="glossary">IV</span> to decrypt. Try all four variants and watch what survives.</p>
+        <div class="btn-row">
+          <button id="cbc-decrypt-correct-btn" class="btn btn-secondary">Decrypt (correct key + IV)</button>
+          <button id="cbc-decrypt-wrong-iv-btn" class="btn btn-secondary">Decrypt (wrong IV)</button>
+          <button id="cbc-decrypt-wrong-key-btn" class="btn btn-secondary">Decrypt (wrong key)</button>
+          <button id="cbc-decrypt-tamper-btn" class="btn btn-secondary">Decrypt (tampered ciphertext)</button>
+        </div>
+        <div class="decrypt-output" id="cbc-decrypt-output" hidden></div>
+      </div>
+
+      <!-- Threat model -->
+      <div class="threat-grid" aria-label="CBC threat model">
+        <div class="threat-col threat-can">
+          <h4>An attacker who sees the ciphertext CAN</h4>
+          <ul>
+            <li>Flip bits in one block to flip the SAME bits in the next plaintext block</li>
+            <li>Mount a padding oracle attack to recover the full plaintext (see Oracle tab)</li>
+            <li>Modify ciphertext silently — there is no <span data-term="Tag" class="glossary">authentication tag</span></li>
+            <li>Detect identical messages if the IV is reused</li>
+          </ul>
+        </div>
+        <div class="threat-col threat-cannot">
+          <h4>An attacker CANNOT</h4>
+          <ul>
+            <li>Decrypt without the key</li>
+            <li>Recover the key from ciphertext + IV</li>
+            <li>Forge ciphertext IF Encrypt-then-MAC is correctly applied</li>
+          </ul>
         </div>
       </div>
 
@@ -190,6 +328,26 @@
         <p><strong>IV reuse:</strong> Same plaintext + same IV + same key = identical ciphertext. The IV must be unpredictable for each encryption.</p>
         <p><strong>Bit-flip attack:</strong> Flipping bit <em>i</em> of ciphertext block <em>n</em> flips bit <em>i</em> of plaintext block <em>n+1</em> — enabling controlled plaintext manipulation without knowing the key.</p>
         <p><strong>No integrity:</strong> CBC provides confidentiality only. Without a MAC (e.g., HMAC in Encrypt-then-MAC), ciphertext tampering goes undetected. This is why AEAD modes like GCM replaced CBC.</p>
+        <p><strong>Real-world incidents:</strong>
+          <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security#BEAST_attack" target="_blank" rel="noopener noreferrer">BEAST (2011)</a> — predictable IV in TLS 1.0 CBC records;
+          <a href="https://en.wikipedia.org/wiki/Lucky_Thirteen_attack" target="_blank" rel="noopener noreferrer">Lucky 13 (2013)</a> — timing-based padding oracle on TLS;
+          <a href="https://en.wikipedia.org/wiki/POODLE" target="_blank" rel="noopener noreferrer">POODLE (2014)</a> — SSL 3.0 padding oracle.
+        </p>
+      </div>
+
+      <!-- Self check -->
+      <div class="quiz-card"
+           data-correct="c"
+           data-why-correct="Encrypt-then-MAC (E&#8209;then&#8209;M) verifies the MAC before decryption, so any ciphertext tampering is rejected up front. CBC alone has no integrity."
+           data-why-wrong="CBC by itself provides confidentiality only. The fix is to add a separate MAC and verify it BEFORE decrypting (Encrypt-then-MAC).">
+        <h4>Self-check</h4>
+        <p>You inherit a legacy system that must keep using AES-CBC. What's the minimum you should add to make it safe against bit-flips and padding oracles?</p>
+        <label><input type="radio" name="q-cbc" value="a"> Longer keys (AES-256 instead of AES-128).</label>
+        <label><input type="radio" name="q-cbc" value="b"> A larger random IV.</label>
+        <label><input type="radio" name="q-cbc" value="c"> Encrypt-then-MAC, with MAC verified before decryption.</label>
+        <label><input type="radio" name="q-cbc" value="d"> Switch from PKCS#7 to a different padding.</label>
+        <button type="button" class="btn btn-secondary quiz-check">Check</button>
+        <div class="quiz-explain" hidden></div>
       </div>
     </section>
 
@@ -199,7 +357,7 @@
         <h2>CTR: Stream Mode</h2>
         <span class="status-chip status-acceptable" aria-label="Status: Acceptable with strict nonce management">ACCEPTABLE</span>
       </div>
-      <p class="panel-desc">Counter mode turns AES into a stream cipher by encrypting successive counter values to produce a keystream, then XORing with plaintext. As defined in <strong>NIST SP 800-38A</strong>, CTR requires a unique nonce/counter combination for every encryption — nonce reuse is catastrophic.</p>
+      <p class="panel-desc">Counter mode turns AES into a stream cipher by encrypting successive <span data-term="Counter" class="glossary">counter</span> values to produce a <span data-term="Keystream" class="glossary">keystream</span>, then XORing with plaintext. As defined in <strong>NIST SP 800-38A</strong>, CTR requires a unique <span data-term="Nonce" class="glossary">nonce</span>/counter combination for every encryption — nonce reuse is catastrophic.</p>
 
       <div class="demo-controls">
         <div class="input-group">
@@ -209,6 +367,12 @@
         <div class="input-group">
           <label for="ctr-plaintext2">Plaintext Message 2 <span class="hint-inline">(for nonce reuse demo)</span></label>
           <textarea id="ctr-plaintext2" rows="2" placeholder="Second message (same nonce)…"></textarea>
+        </div>
+        <div class="predict-prompt">
+          <span class="predict-label">Predict:</span>
+          Encrypt two different messages with the same key and same nonce. Can an attacker who knows message 1 recover message 2 from the ciphertexts alone?
+          <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
+          <span class="predict-answer">Yes — and trivially. C₁ ⊕ C₂ = P₁ ⊕ P₂ (the keystream cancels). Knowing P₁ recovers P₂ instantly. The "Nonce Reuse" demo below proves it on your own input.</span>
         </div>
         <div class="btn-row">
           <button id="ctr-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CTR mode">Encrypt with CTR</button>
@@ -233,15 +397,67 @@
           <h3>Counter + Keystream Generation</h3>
           <div id="ctr-stream-blocks" class="stream-blocks" role="img" aria-label="CTR mode counter blocks and keystream XOR"></div>
         </div>
+        <div class="math-overlay" id="ctr-math" hidden>
+          <h3>Block-level math</h3>
+          <div class="math-rows" id="ctr-math-rows"></div>
+        </div>
         <div id="ctr-nonce-output" class="vuln-output" hidden>
           <h3 id="ctr-nonce-title">Nonce Reuse Attack</h3>
           <div id="ctr-nonce-content" aria-labelledby="ctr-nonce-title" aria-live="polite"></div>
         </div>
       </div>
 
+      <!-- Decrypt demo -->
+      <div class="decrypt-section" id="ctr-decrypt-section" hidden>
+        <h3>Decrypt</h3>
+        <p class="decrypt-hint">CTR has no integrity check. A single bit flip in ciphertext byte <em>n</em> flips the exact same bit in plaintext byte <em>n</em> — and decryption "succeeds" silently.</p>
+        <div class="btn-row">
+          <button id="ctr-decrypt-correct-btn" class="btn btn-secondary">Decrypt (correct)</button>
+          <button id="ctr-decrypt-wrong-nonce-btn" class="btn btn-secondary">Decrypt (wrong nonce)</button>
+          <button id="ctr-decrypt-tamper-btn" class="btn btn-secondary">Decrypt (1-bit ciphertext flip)</button>
+        </div>
+        <div class="decrypt-output" id="ctr-decrypt-output" hidden></div>
+      </div>
+
+      <!-- Threat model -->
+      <div class="threat-grid" aria-label="CTR threat model">
+        <div class="threat-col threat-can">
+          <h4>An attacker CAN</h4>
+          <ul>
+            <li>If nonce reuses: recover full plaintext via C₁ ⊕ C₂ = P₁ ⊕ P₂</li>
+            <li>Flip any bit of ciphertext and flip the same bit of plaintext (no integrity)</li>
+            <li>Truncate the ciphertext silently</li>
+          </ul>
+        </div>
+        <div class="threat-col threat-cannot">
+          <h4>An attacker CANNOT</h4>
+          <ul>
+            <li>Decrypt without the key (when nonces are unique)</li>
+            <li>Predict the keystream for an unused counter value</li>
+          </ul>
+        </div>
+      </div>
+
       <div class="explainer">
         <h3>Nonce Discipline Is Everything</h3>
         <p>If two messages are encrypted with the same key and nonce, XORing the two ciphertexts cancels out the keystream: C₁ ⊕ C₂ = P₁ ⊕ P₂. An attacker who knows (or guesses) one plaintext can recover the other. CTR is secure <em>only</em> when every (key, nonce) pair is unique.</p>
+        <p><strong>Real-world incident:</strong>
+          <a href="https://www.usenix.org/system/files/sec22-baillon.pdf" target="_blank" rel="noopener noreferrer">Nintendo Switch boot ROM (2018)</a> reused CTR nonces in early production; multiple academic case studies have similar findings for hand-rolled CTR.</p>
+      </div>
+
+      <!-- Self check -->
+      <div class="quiz-card"
+           data-correct="b"
+           data-why-correct="C₁ ⊕ C₂ cancels the keystream and leaves P₁ ⊕ P₂. From there, any known plaintext reveals the other."
+           data-why-wrong="The most damaging consequence of CTR nonce reuse is XOR-based plaintext recovery — not key recovery, not slowdowns.">
+        <h4>Self-check</h4>
+        <p>Two CTR messages were encrypted with the same key and same nonce. What does the attacker get from XORing the two ciphertexts?</p>
+        <label><input type="radio" name="q-ctr" value="a"> The AES key.</label>
+        <label><input type="radio" name="q-ctr" value="b"> P₁ ⊕ P₂ — the XOR of the two plaintexts.</label>
+        <label><input type="radio" name="q-ctr" value="c"> The counter value.</label>
+        <label><input type="radio" name="q-ctr" value="d"> Nothing useful — CTR is still secure.</label>
+        <button type="button" class="btn btn-secondary quiz-check">Check</button>
+        <div class="quiz-explain" hidden></div>
       </div>
     </section>
 
@@ -251,7 +467,7 @@
         <h2>GCM: Authenticated Encryption</h2>
         <span class="status-chip status-recommended" aria-label="Status: Recommended default">RECOMMENDED</span>
       </div>
-      <p class="panel-desc">Galois/Counter Mode combines CTR encryption with GHASH authentication. As defined in <strong>NIST SP 800-38D</strong>, GCM provides both confidentiality and authenticity, including authentication of Additional Authenticated Data (AAD). The nonce must never repeat with the same key.</p>
+      <p class="panel-desc">Galois/Counter Mode combines CTR encryption with <span data-term="GHASH" class="glossary">GHASH</span> authentication. As defined in <strong>NIST SP 800-38D</strong>, GCM provides both confidentiality and authenticity, including authentication of <span data-term="AAD" class="glossary">Additional Authenticated Data (AAD)</span>. The <span data-term="Nonce" class="glossary">nonce</span> must never repeat with the same key.</p>
 
       <div class="demo-controls">
         <div class="input-group">
@@ -273,6 +489,12 @@
             <option value="96">96</option>
           </select>
           <span id="gcm-tag-hint" class="hint">Per NIST SP 800-38D §5.2.1.2, shorter tags reduce forgery resistance. 128-bit is recommended.</span>
+        </div>
+        <div class="predict-prompt">
+          <span class="predict-label">Predict:</span>
+          You flip ONE bit of the GCM ciphertext (not the tag). What happens on decrypt?
+          <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
+          <span class="predict-answer">Decryption fails outright — no plaintext is released. The tag check covers the ciphertext, AAD, and length fields, so a single-bit change invalidates the entire message.</span>
         </div>
         <div class="btn-row">
           <button id="gcm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with GCM mode">Encrypt with GCM</button>
@@ -297,9 +519,46 @@
           <h3>Auth Tag <span class="hex-label">(hex)</span></h3>
           <output id="gcm-tag" class="hex-output" aria-label="Authentication tag in hexadecimal"></output>
         </div>
+        <div class="math-overlay" id="gcm-math" hidden>
+          <h3>Block-level math</h3>
+          <div class="math-rows" id="gcm-math-rows"></div>
+        </div>
         <div id="gcm-tamper-output" class="vuln-output" hidden>
           <h3 id="gcm-tamper-title">Tamper Detection</h3>
           <div id="gcm-tamper-content" aria-labelledby="gcm-tamper-title" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- Decrypt demo -->
+      <div class="decrypt-section" id="gcm-decrypt-section" hidden>
+        <h3>Decrypt</h3>
+        <p class="decrypt-hint">GCM's <span data-term="Tag" class="glossary">authentication tag</span> binds ciphertext, AAD, nonce, and lengths. Any modification → decrypt fails. This is what "<span data-term="AEAD" class="glossary">AEAD</span>" buys you.</p>
+        <div class="btn-row">
+          <button id="gcm-decrypt-correct-btn" class="btn btn-secondary">Decrypt (correct)</button>
+          <button id="gcm-decrypt-wrong-aad-btn" class="btn btn-secondary">Decrypt (wrong AAD)</button>
+          <button id="gcm-decrypt-wrong-nonce-btn" class="btn btn-secondary">Decrypt (wrong nonce)</button>
+          <button id="gcm-decrypt-tamper-btn" class="btn btn-secondary">Decrypt (1-bit ciphertext flip)</button>
+        </div>
+        <div class="decrypt-output" id="gcm-decrypt-output" hidden></div>
+      </div>
+
+      <!-- Threat model -->
+      <div class="threat-grid" aria-label="GCM threat model">
+        <div class="threat-col threat-can">
+          <h4>An attacker CAN</h4>
+          <ul>
+            <li>If nonce reuses: forge messages and recover the GHASH subkey H ("forbidden attack")</li>
+            <li>Make the receiver reject messages by tampering — denial of service</li>
+            <li>Try ~2<sup>tagbits</sup> forgeries per message if the tag is truncated</li>
+          </ul>
+        </div>
+        <div class="threat-col threat-cannot">
+          <h4>An attacker CANNOT</h4>
+          <ul>
+            <li>Modify ciphertext, AAD, or nonce without detection</li>
+            <li>Decrypt without the key</li>
+            <li>Mount a padding oracle attack (no padding, no oracle)</li>
+          </ul>
         </div>
       </div>
 
@@ -307,6 +566,23 @@
         <h3>Why GCM Is the Recommended Default</h3>
         <p>GCM provides authenticated encryption — any modification to the ciphertext, AAD, nonce, or tag causes decryption to fail. This prevents bit-flip attacks, padding oracle attacks, and all forms of ciphertext tampering.</p>
         <p><strong>Tag truncation:</strong> Per <strong>NIST SP 800-38D §5.2.1.2</strong>, truncating the authentication tag below 128 bits reduces the effort required for a forgery attack. A <em>t</em>-bit tag provides at most 2<sup>−t</sup> forgery probability per attempt. Tags shorter than 96 bits are not recommended.</p>
+        <p><strong>Real-world incident:</strong>
+          the <a href="https://eprint.iacr.org/2016/475.pdf" target="_blank" rel="noopener noreferrer">"forbidden attack" (Joux, 2006)</a> — if a GCM nonce ever repeats, the attacker can recover H and forge arbitrary ciphertexts; multiple HTTPS frontends shipped repeating nonces before this was widely audited.</p>
+      </div>
+
+      <!-- Self check -->
+      <div class="quiz-card"
+           data-correct="c"
+           data-why-correct="GCM's nonce must be unique per key. Reuse leaks the GHASH subkey H, which lets the attacker forge any ciphertext under that key — confidentiality and authenticity both collapse."
+           data-why-wrong="GCM nonce reuse is uniquely catastrophic: it breaks BOTH confidentiality AND authenticity for that key. Not 'just like CTR' — worse, because the attacker also recovers the authentication key.">
+        <h4>Self-check</h4>
+        <p>You reuse a GCM nonce with the same key. What's the worst consequence?</p>
+        <label><input type="radio" name="q-gcm" value="a"> A slight performance hit during decryption.</label>
+        <label><input type="radio" name="q-gcm" value="b"> Same as CTR nonce reuse — XOR of plaintexts.</label>
+        <label><input type="radio" name="q-gcm" value="c"> Attacker recovers the GHASH subkey H and can forge any future message under that key.</label>
+        <label><input type="radio" name="q-gcm" value="d"> The AAD silently changes.</label>
+        <button type="button" class="btn btn-secondary quiz-check">Check</button>
+        <div class="quiz-explain" hidden></div>
       </div>
     </section>
 
@@ -316,7 +592,7 @@
         <h2>CCM: Constrained Environments</h2>
         <span class="status-chip status-acceptable" aria-label="Status: Acceptable for constrained environments">ACCEPTABLE</span>
       </div>
-      <p class="panel-desc">Counter with CBC-MAC mode combines CTR encryption with CBC-MAC authentication. Defined in <strong>RFC 3610</strong> and <strong>NIST SP 800-38C</strong>, CCM is a two-pass AEAD mode suitable for constrained environments where code size and complexity matter.</p>
+      <p class="panel-desc">Counter with <span data-term="CBC-MAC" class="glossary">CBC-MAC</span> mode combines CTR encryption with CBC-MAC authentication. Defined in <strong>RFC 3610</strong> and <strong>NIST SP 800-38C</strong>, CCM is a two-pass <span data-term="AEAD" class="glossary">AEAD</span> mode suitable for constrained environments where code size and complexity matter.</p>
 
       <div class="demo-controls">
         <div class="input-group">
@@ -327,7 +603,16 @@
           <label for="ccm-aad">Additional Authenticated Data (AAD)</label>
           <input type="text" id="ccm-aad" placeholder="e.g. device ID, sequence number">
         </div>
-        <button id="ccm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CCM mode">Encrypt with CCM</button>
+        <div class="predict-prompt">
+          <span class="predict-label">Predict:</span>
+          CCM is "two-pass" while GCM is "one-pass". On a small microcontroller with no AES hardware, which is more attractive?
+          <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
+          <span class="predict-answer">CCM. It only needs the AES block cipher — no Galois-field multiplication or GHASH table. The two-pass cost is dwarfed by the savings in code size and gate count, which is why Zigbee, BLE, and 802.15.4 chose CCM.</span>
+        </div>
+        <div class="btn-row">
+          <button id="ccm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CCM mode">Encrypt with CCM</button>
+          <button id="ccm-tamper-btn" class="btn btn-secondary" aria-label="Demonstrate tampered ciphertext rejection" disabled>Demo: Tamper Detection</button>
+        </div>
       </div>
 
       <div class="demo-output" aria-live="polite">
@@ -342,6 +627,10 @@
         <div class="output-group">
           <h3>Ciphertext + Tag <span class="hex-label">(hex)</span></h3>
           <output id="ccm-ciphertext" class="hex-output" aria-label="CCM ciphertext with authentication tag in hexadecimal"></output>
+        </div>
+        <div class="math-overlay" id="ccm-math" hidden>
+          <h3>Block-level math</h3>
+          <div class="math-rows" id="ccm-math-rows"></div>
         </div>
         <div class="block-viz">
           <h3>CCM vs GCM Comparison</h3>
@@ -358,13 +647,90 @@
             <div role="row"><span role="cell">Use case</span><span role="cell">IoT, 802.15.4</span><span role="cell">TLS, general</span></div>
           </div>
         </div>
+        <div id="ccm-tamper-output" class="vuln-output" hidden>
+          <h3 id="ccm-tamper-title">Tamper Detection</h3>
+          <div id="ccm-tamper-content" aria-labelledby="ccm-tamper-title" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- Decrypt demo -->
+      <div class="decrypt-section" id="ccm-decrypt-section" hidden>
+        <h3>Decrypt</h3>
+        <p class="decrypt-hint">Like GCM, CCM is an <span data-term="AEAD" class="glossary">AEAD</span> — tampering is rejected outright.</p>
+        <div class="btn-row">
+          <button id="ccm-decrypt-correct-btn" class="btn btn-secondary">Decrypt (correct)</button>
+          <button id="ccm-decrypt-tamper-btn" class="btn btn-secondary">Decrypt (1-bit ciphertext flip)</button>
+        </div>
+        <div class="decrypt-output" id="ccm-decrypt-output" hidden></div>
+      </div>
+
+      <!-- Threat model -->
+      <div class="threat-grid" aria-label="CCM threat model">
+        <div class="threat-col threat-can">
+          <h4>An attacker CAN</h4>
+          <ul>
+            <li>If nonce reuses: forge messages (same caveat as GCM, less catastrophic)</li>
+            <li>Cause denial of service via rejected tampered messages</li>
+          </ul>
+        </div>
+        <div class="threat-col threat-cannot">
+          <h4>An attacker CANNOT</h4>
+          <ul>
+            <li>Modify ciphertext, AAD, nonce, or length without detection</li>
+            <li>Mount a padding oracle attack</li>
+            <li>Decrypt without the key</li>
+          </ul>
+        </div>
       </div>
 
       <div class="explainer">
         <h3>When to Use CCM</h3>
         <p>CCM is specified in <strong>RFC 3610</strong> and used in IEEE 802.15.4 (Zigbee), Bluetooth Low Energy, and other constrained protocols. It uses only the AES block cipher — no dedicated hash or GHASH — making it suitable for hardware with minimal gate count.</p>
         <p>For general-purpose applications, GCM is preferred due to its single-pass operation and hardware acceleration support (PCLMULQDQ/CLMUL instructions).</p>
+        <p><strong>Real-world deployments:</strong>
+          <a href="https://www.wi-fi.org/discover-wi-fi/security" target="_blank" rel="noopener noreferrer">WPA2 (CCMP)</a>, Zigbee, BLE link-layer security — all chose CCM for its small code/hardware footprint.</p>
         <p><strong>Implementation note:</strong> WebCrypto does not support CCM. This demo implements CCM from AES block primitives using <a href="https://github.com/paulmillr/noble-ciphers" target="_blank" rel="noopener noreferrer">@noble/ciphers</a> ECB for single-block AES encryption, building CBC-MAC + CTR per RFC 3610.</p>
+      </div>
+
+      <!-- Self check -->
+      <div class="quiz-card"
+           data-correct="b"
+           data-why-correct="CCM's appeal in constrained hardware is exactly this: only the AES block cipher is needed — no Galois multiplier or precomputed GHASH table."
+           data-why-wrong="CCM and GCM are both AEAD modes. The decisive practical difference for tiny hardware is that CCM only needs AES — no GHASH multiplier.">
+        <h4>Self-check</h4>
+        <p>What is the main reason Zigbee/BLE/802.15.4 chose CCM over GCM?</p>
+        <label><input type="radio" name="q-ccm" value="a"> CCM is faster on modern CPUs.</label>
+        <label><input type="radio" name="q-ccm" value="b"> CCM only needs the AES block cipher — no extra multiplier or hash.</label>
+        <label><input type="radio" name="q-ccm" value="c"> CCM tolerates nonce reuse better than GCM.</label>
+        <label><input type="radio" name="q-ccm" value="d"> CCM has stronger keys than GCM.</label>
+        <button type="button" class="btn btn-secondary quiz-check">Check</button>
+        <div class="quiz-explain" hidden></div>
+      </div>
+    </section>
+
+    <!-- Panel: Compare -->
+    <section role="tabpanel" id="panel-compare" class="mode-panel" aria-labelledby="tab-compare" hidden>
+      <div class="panel-header">
+        <h2>Same plaintext, all five modes</h2>
+        <span class="status-chip status-compare">SIDE-BY-SIDE</span>
+      </div>
+      <p class="panel-desc">Type any plaintext (try one with repeated 16-byte blocks). The lab encrypts it under <strong>ECB</strong>, <strong>CBC</strong>, <strong>CTR</strong>, <strong>GCM</strong>, and <strong>CCM</strong> with fresh random keys/nonces and renders the ciphertext block grids side-by-side. ECB will show repeats; the others won't.</p>
+
+      <div class="demo-controls">
+        <div class="input-group">
+          <label for="compare-plaintext">Plaintext</label>
+          <textarea id="compare-plaintext" rows="3" placeholder='Try "YELLOW SUBMARINE" repeated 4 times…'></textarea>
+        </div>
+        <button id="compare-btn" class="btn btn-primary">Encrypt under all 5 modes</button>
+      </div>
+
+      <div class="compare-grid" id="compare-output" aria-live="polite"></div>
+
+      <div class="explainer">
+        <h3>What to look for</h3>
+        <p><strong>ECB:</strong> repeated input blocks → repeated colored squares. Structure leaked.</p>
+        <p><strong>CBC / CTR / GCM / CCM:</strong> every block looks unique even when the input repeats. That's chaining or keystream doing its job.</p>
+        <p>Look at the legend at the bottom of each row — only ECB will report duplicate blocks.</p>
       </div>
     </section>
 
@@ -374,13 +740,19 @@
         <h2>Padding Oracle Attack</h2>
         <span class="status-chip status-attack" aria-label="Attack demonstration">ATTACK DEMO</span>
       </div>
-      <p class="panel-desc">A step-by-step demonstration of a CBC padding oracle attack. The oracle reveals only whether PKCS#7 padding is valid — yet this single bit of information is enough to recover the <em>entire plaintext</em>, one byte at a time.</p>
+      <p class="panel-desc">A step-by-step demonstration of a CBC padding oracle attack. The oracle reveals only whether <span data-term="PKCS#7" class="glossary">PKCS#7</span> padding is valid — yet this single bit of information is enough to recover the <em>entire plaintext</em>, one byte at a time.</p>
 
       <div class="demo-controls">
         <div class="input-group">
           <label for="oracle-plaintext">Secret Plaintext</label>
           <textarea id="oracle-plaintext" rows="2" placeholder="Enter a secret message (will be encrypted, then attacked)…" aria-describedby="oracle-plaintext-hint"></textarea>
           <span id="oracle-plaintext-hint" class="hint">This will be CBC-encrypted. The oracle attack will recover it byte-by-byte using only padding validation.</span>
+        </div>
+        <div class="predict-prompt">
+          <span class="predict-label">Predict:</span>
+          The oracle only answers "padding valid?" with yes/no. Can it leak the whole plaintext?
+          <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
+          <span class="predict-answer">Yes. Each correctly-paired guess reveals one intermediate byte, which XOR'd with the real previous-block byte gives one plaintext byte. ~128 queries per byte on average, ~2048 per block. Watch it happen below.</span>
         </div>
         <div class="btn-row">
           <button id="oracle-setup-btn" class="btn btn-primary" aria-label="Encrypt and set up oracle attack">Encrypt &amp; Setup Oracle</button>
@@ -407,6 +779,10 @@
             <h4>Recovered Plaintext</h4>
             <output id="oracle-recovered-text" class="hex-output recovered-text" aria-label="Recovered plaintext"></output>
           </div>
+          <div class="oracle-math" id="oracle-math" hidden>
+            <h4>Latest XOR derivation</h4>
+            <code id="oracle-math-content"></code>
+          </div>
           <div class="oracle-log">
             <h4>Oracle Query Log</h4>
             <div id="oracle-log" class="log-scroll" role="log" aria-label="Padding oracle query log" aria-live="off"></div>
@@ -414,11 +790,51 @@
         </div>
       </div>
 
+      <!-- Threat model -->
+      <div class="threat-grid" aria-label="Padding oracle threat model">
+        <div class="threat-col threat-can">
+          <h4>An attacker who has oracle access CAN</h4>
+          <ul>
+            <li>Recover the entire plaintext byte-by-byte with ~128 queries per byte</li>
+            <li>Do all of this with NO knowledge of the key</li>
+            <li>Operate without arousing suspicion (queries look like normal traffic)</li>
+          </ul>
+        </div>
+        <div class="threat-col threat-cannot">
+          <h4>An attacker CANNOT</h4>
+          <ul>
+            <li>Recover the key itself</li>
+            <li>Succeed against a system that uses AEAD (GCM/CCM)</li>
+            <li>Succeed against Encrypt-then-MAC that verifies the MAC first</li>
+          </ul>
+        </div>
+      </div>
+
       <div class="explainer">
         <h3>Why This Attack Works</h3>
-        <p>PKCS#7 padding requires the last <em>n</em> bytes to all equal <em>n</em>. A padding oracle — any system that reveals whether padding is valid — leaks one plaintext byte per ~128 queries on average. Across 16 bytes per block, the entire plaintext is recovered using only ~2,048 oracle queries per block.</p>
+        <p><span data-term="PKCS#7" class="glossary">PKCS#7</span> padding requires the last <em>n</em> bytes to all equal <em>n</em>. A padding oracle — any system that reveals whether padding is valid — leaks one plaintext byte per ~128 queries on average. Across 16 bytes per block, the entire plaintext is recovered using only ~2,048 oracle queries per block.</p>
+        <p><strong>Per-byte math:</strong> when guess <code>g</code> produces valid padding with target pad value <code>p</code>, then <code>intermediate = g XOR p</code>. The plaintext byte is then <code>intermediate XOR prev[byte]</code>, where <code>prev</code> is the real previous ciphertext block (or the IV for block 0). The XOR derivation panel below shows each successful step live.</p>
+        <p><strong>Real-world incidents:</strong>
+          <a href="https://en.wikipedia.org/wiki/Lucky_Thirteen_attack" target="_blank" rel="noopener noreferrer">Lucky 13 (2013)</a> — timing-based oracle in TLS;
+          <a href="https://en.wikipedia.org/wiki/POODLE" target="_blank" rel="noopener noreferrer">POODLE (2014)</a> — SSL 3.0 padding oracle.
+        </p>
         <p><strong>Defense:</strong> Use authenticated encryption (GCM, CCM, ChaCha20-Poly1305). If CBC is unavoidable, use Encrypt-then-MAC and verify the MAC <em>before</em> attempting decryption — never reveal padding validity.</p>
         <p>See also: <a href="https://systemslibrarian.github.io/crypto-lab-shadow-vault/" target="_blank" rel="noopener noreferrer">crypto-lab-shadow-vault</a> for ChaCha20-Poly1305 AEAD.</p>
+      </div>
+
+      <!-- Self check -->
+      <div class="quiz-card"
+           data-correct="c"
+           data-why-correct="With Encrypt-then-MAC, the server validates the MAC over (IV || ciphertext) BEFORE decrypting. A tampered ciphertext never reaches the padding check, so the oracle never speaks."
+           data-why-wrong="The oracle leaks ~1 byte per ~128 queries — slowing it slightly doesn't help. Switching pad scheme doesn't help. The fix is to never let the oracle answer in the first place.">
+        <h4>Self-check</h4>
+        <p>Your CBC server reveals "bad padding" vs "bad MAC" via different error messages. How do you kill the oracle without rewriting the whole protocol?</p>
+        <label><input type="radio" name="q-oracle" value="a"> Use 0-padding instead of PKCS#7.</label>
+        <label><input type="radio" name="q-oracle" value="b"> Add a 100ms delay before every padding error.</label>
+        <label><input type="radio" name="q-oracle" value="c"> Switch to Encrypt-then-MAC; verify the MAC BEFORE attempting decryption.</label>
+        <label><input type="radio" name="q-oracle" value="d"> Rotate keys daily.</label>
+        <button type="button" class="btn btn-secondary quiz-check">Check</button>
+        <div class="quiz-explain" hidden></div>
       </div>
     </section>
 

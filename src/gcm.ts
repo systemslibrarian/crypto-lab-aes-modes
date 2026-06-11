@@ -1,20 +1,19 @@
 /**
- * gcm.ts — GCM mode with AAD and tag truncation demos
- *
- * Uses WebCrypto AES-GCM (AES-256). Demonstrates:
- * - Authenticated encryption with AAD
- * - Tag truncation weakness (NIST SP 800-38D §5.2.1.2)
- * - Tamper detection (ciphertext modification → decryption failure)
+ * gcm.ts — GCM mode with AAD, tag truncation, full decrypt + tamper demos
  */
 
-import { hexEncode, textToBytes, announceError, aesEncrypt, aesDecrypt } from './ui';
+import {
+  hexEncode,
+  textToBytes,
+  bytesToText,
+  announceError,
+  aesEncrypt,
+  aesDecrypt,
+} from './ui';
+import { gcmMath, renderMath } from './helpers';
 
 async function generateGCMKey(): Promise<CryptoKey> {
-  return crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt']
-  );
+  return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
 }
 
 async function exportKeyHex(key: CryptoKey): Promise<string> {
@@ -30,21 +29,14 @@ export async function gcmEncrypt(
   tagLength: number
 ): Promise<{ ciphertext: Uint8Array; tag: Uint8Array; combined: Uint8Array }> {
   const combined = await aesEncrypt(
-    {
-      name: 'AES-GCM',
-      iv: nonce,
-      additionalData: aad,
-      tagLength,
-    },
+    { name: 'AES-GCM', iv: nonce, additionalData: aad, tagLength },
     key,
     plaintext
   );
-
   const buf = new Uint8Array(combined);
   const tagBytes = tagLength / 8;
   const ct = buf.slice(0, buf.length - tagBytes);
   const tag = buf.slice(buf.length - tagBytes);
-
   return { ciphertext: ct, tag, combined: buf };
 }
 
@@ -56,16 +48,17 @@ export async function gcmDecrypt(
   tagLength: number
 ): Promise<Uint8Array> {
   const pt = await aesDecrypt(
-    {
-      name: 'AES-GCM',
-      iv: nonce,
-      additionalData: aad,
-      tagLength,
-    },
+    { name: 'AES-GCM', iv: nonce, additionalData: aad, tagLength },
     key,
     combined
   );
   return new Uint8Array(pt);
+}
+
+function escapeHtml(s: string): string {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
 }
 
 export function mountGCMPanel(): void {
@@ -80,11 +73,22 @@ export function mountGCMPanel(): void {
   const tagOut = document.getElementById('gcm-tag') as HTMLElement;
   const tamperOutput = document.getElementById('gcm-tamper-output') as HTMLElement;
   const tamperContent = document.getElementById('gcm-tamper-content') as HTMLElement;
+  const mathBox = document.getElementById('gcm-math') as HTMLElement;
+  const mathRows = document.getElementById('gcm-math-rows') as HTMLElement;
+  const decryptSection = document.getElementById('gcm-decrypt-section') as HTMLElement;
+  const decryptCorrectBtn = document.getElementById('gcm-decrypt-correct-btn') as HTMLButtonElement;
+  const decryptWrongAadBtn = document.getElementById('gcm-decrypt-wrong-aad-btn') as HTMLButtonElement;
+  const decryptWrongNonceBtn = document.getElementById('gcm-decrypt-wrong-nonce-btn') as HTMLButtonElement;
+  const decryptTamperBtn = document.getElementById('gcm-decrypt-tamper-btn') as HTMLButtonElement;
+  const decryptOutput = document.getElementById('gcm-decrypt-output') as HTMLElement;
 
   let currentKey: CryptoKey | null = null;
   let currentNonce: Uint8Array | null = null;
   let currentCombined: Uint8Array | null = null;
+  let currentCiphertext: Uint8Array | null = null;
+  let currentTag: Uint8Array | null = null;
   let currentAAD: Uint8Array | null = null;
+  let currentPlaintext: Uint8Array | null = null;
   let currentTagLength = 128;
 
   encryptBtn.addEventListener('click', async () => {
@@ -92,14 +96,12 @@ export function mountGCMPanel(): void {
       currentKey = await generateGCMKey();
       currentNonce = crypto.getRandomValues(new Uint8Array(12));
       currentTagLength = parseInt(tagLenEl.value, 10);
-
       const keyHex = await exportKeyHex(currentKey);
       keyOut.textContent = keyHex;
       nonceOut.textContent = hexEncode(currentNonce);
-
       const plain = textToBytes(plaintextEl.value || 'GCM provides authenticated encryption.');
+      currentPlaintext = plain;
       currentAAD = textToBytes(aadEl.value || '');
-
       const { ciphertext, tag, combined } = await gcmEncrypt(
         currentKey,
         currentNonce,
@@ -107,19 +109,20 @@ export function mountGCMPanel(): void {
         currentAAD,
         currentTagLength
       );
-
       currentCombined = combined;
+      currentCiphertext = ciphertext;
+      currentTag = tag;
       ctOut.textContent = hexEncode(ciphertext);
       tagOut.textContent = hexEncode(tag);
-
+      if (currentTagLength < 128) {
+        tagOut.textContent += ` ⚠ ${currentTagLength}-bit tag: ~2^${currentTagLength} attempts for forgery`;
+      }
+      renderMath(mathRows, gcmMath(currentNonce, plain, ciphertext, tag));
+      mathBox.hidden = false;
       tamperBtn.disabled = false;
       tamperOutput.hidden = true;
-
-      // Show tag truncation warning if not 128
-      if (currentTagLength < 128) {
-        const forgeryBits = currentTagLength;
-        tagOut.textContent += ` ⚠ ${forgeryBits}-bit tag: ~2^${forgeryBits} attempts for forgery`;
-      }
+      decryptSection.hidden = false;
+      decryptOutput.hidden = true;
     } catch (err) {
       announceError(`GCM encryption failed: ${(err as Error).message}`);
     }
@@ -127,24 +130,16 @@ export function mountGCMPanel(): void {
 
   tamperBtn.addEventListener('click', async () => {
     if (!currentKey || !currentNonce || !currentCombined || !currentAAD) return;
-
     try {
-      // Tamper with ciphertext: flip one bit
       const tampered = new Uint8Array(currentCombined);
       tampered[0] ^= 0x01;
-
       tamperOutput.hidden = false;
-
       try {
         await gcmDecrypt(currentKey, currentNonce, tampered, currentAAD, currentTagLength);
-        // Should NOT reach here
         tamperContent.innerHTML = `
-          <p style="color:var(--danger);font-weight:700;">
-            ⚠ Unexpected: decryption succeeded despite tampering!
-          </p>
+          <p style="color:var(--danger);font-weight:700;">⚠ Unexpected: decryption succeeded despite tampering!</p>
         `;
       } catch {
-        // Expected! Authentication tag verification failed
         tamperContent.innerHTML = `
           <p><strong>Tampered ciphertext (flipped bit 0 of byte 0):</strong></p>
           <div class="hex-output" style="margin:0.5rem 0;">
@@ -157,19 +152,81 @@ export function mountGCMPanel(): void {
             GCM detected the 1-bit modification. The GHASH authentication tag over the ciphertext,
             AAD, and lengths does not match. No plaintext was released.
           </p>
-          <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.3rem;">
-            Text equivalent: SECURE — tampered ciphertext correctly rejected by GCM authentication
-          </p>
           ${currentTagLength < 128 ? `
           <p style="margin-top:0.75rem;padding:0.5rem;background:var(--warning-bg);border:1px solid var(--warning);border-radius:4px;font-size:0.82rem;">
             <strong>Tag truncation note (NIST SP 800-38D §5.2.1.2):</strong> With a ${currentTagLength}-bit tag,
             forgery probability per attempt is ≤ 2<sup>−${currentTagLength}</sup>. For maximum security, use 128-bit tags.
-          </p>
-          ` : ''}
+          </p>` : ''}
         `;
       }
     } catch (err) {
       announceError(`Tamper demo failed: ${(err as Error).message}`);
+    }
+  });
+
+  // ─── Decrypt demos ──
+  decryptCorrectBtn.addEventListener('click', async () => {
+    if (!currentKey || !currentNonce || !currentCombined || !currentAAD) return;
+    try {
+      const pt = await gcmDecrypt(currentKey, currentNonce, currentCombined, currentAAD, currentTagLength);
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `
+        <p><strong>Decrypt with correct key + nonce + AAD:</strong></p>
+        <code class="decrypt-result decrypt-ok">${escapeHtml(bytesToText(pt))}</code>
+        <p class="decrypt-takeaway">✓ Plaintext recovered AND authenticated. The tag matched.</p>
+      `;
+    } catch (e) {
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `<p class="decrypt-fail">Decrypt failed: ${escapeHtml((e as Error).message)}</p>`;
+    }
+  });
+
+  decryptWrongAadBtn.addEventListener('click', async () => {
+    if (!currentKey || !currentNonce || !currentCombined) return;
+    try {
+      const wrongAAD = textToBytes('this-was-not-the-original-AAD');
+      await gcmDecrypt(currentKey, currentNonce, currentCombined, wrongAAD, currentTagLength);
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `<p style="color:var(--danger);">⚠ Unexpected: decryption succeeded with wrong AAD!</p>`;
+    } catch {
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `
+        <p><strong>Decrypt with WRONG AAD:</strong></p>
+        <p class="decrypt-takeaway decrypt-ok">✓ REJECTED. The AAD is part of the authentication tag — change it, tag fails, no plaintext is released. This is what binds metadata to ciphertext.</p>
+      `;
+    }
+  });
+
+  decryptWrongNonceBtn.addEventListener('click', async () => {
+    if (!currentKey || !currentCombined || !currentAAD) return;
+    try {
+      const wrongNonce = crypto.getRandomValues(new Uint8Array(12));
+      await gcmDecrypt(currentKey, wrongNonce, currentCombined, currentAAD, currentTagLength);
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `<p style="color:var(--danger);">⚠ Unexpected: decryption succeeded with wrong nonce!</p>`;
+    } catch {
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `
+        <p><strong>Decrypt with WRONG nonce:</strong></p>
+        <p class="decrypt-takeaway decrypt-ok">✓ REJECTED. The nonce drives both the keystream AND J₀ for the tag — wrong nonce, wrong tag.</p>
+      `;
+    }
+  });
+
+  decryptTamperBtn.addEventListener('click', async () => {
+    if (!currentKey || !currentNonce || !currentCombined || !currentAAD) return;
+    const tampered = new Uint8Array(currentCombined);
+    tampered[0] ^= 0x01;
+    try {
+      await gcmDecrypt(currentKey, currentNonce, tampered, currentAAD, currentTagLength);
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `<p style="color:var(--danger);">⚠ Unexpected: decryption succeeded after tampering!</p>`;
+    } catch {
+      decryptOutput.hidden = false;
+      decryptOutput.innerHTML = `
+        <p><strong>Decrypt with 1-bit ciphertext flip:</strong></p>
+        <p class="decrypt-takeaway decrypt-ok">✓ REJECTED. The tag covers every bit of ciphertext. Compare this with CBC/CTR, where the same flip would silently return mangled plaintext.</p>
+      `;
     }
   });
 }
