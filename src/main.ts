@@ -1,7 +1,5 @@
 /**
  * main.ts — Entry point for crypto-lab-aes-modes
- *
- * Initializes theme toggle, tab navigation, and mounts all mode panels.
  */
 
 import { initTabs } from './ui';
@@ -11,6 +9,8 @@ import { mountCTRPanel } from './ctr';
 import { mountGCMPanel } from './gcm';
 import { mountCCMPanel } from './ccm';
 import { mountOraclePanel } from './oracle';
+import { mountComparePanel } from './compare';
+import { mountGlossary, mountPredictPrompts, mountQuizzes } from './helpers';
 
 function initThemeToggle(): void {
   const button = document.getElementById('theme-toggle');
@@ -48,4 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
   mountGCMPanel();
   mountCCMPanel();
   mountOraclePanel();
+  mountComparePanel();
+
+  mountGlossary();
+  mountPredictPrompts();
+  mountQuizzes();
 });
