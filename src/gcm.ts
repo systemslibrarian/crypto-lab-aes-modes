@@ -153,7 +153,7 @@ export function mountGCMPanel(): void {
             AAD, and lengths does not match. No plaintext was released.
           </p>
           ${currentTagLength < 128 ? `
-          <p style="margin-top:0.75rem;padding:0.5rem;background:var(--warning-bg);border:1px solid var(--warning);border-radius:4px;font-size:0.82rem;">
+          <p style="margin-top:0.75rem;padding:0.5rem;background-color:var(--warning-bg);border:1px solid var(--warning);border-radius:4px;font-size:0.82rem;">
             <strong>Tag truncation note (NIST SP 800-38D §5.2.1.2):</strong> With a ${currentTagLength}-bit tag,
             forgery probability per attempt is ≤ 2<sup>−${currentTagLength}</sup>. For maximum security, use 128-bit tags.
           </p>` : ''}

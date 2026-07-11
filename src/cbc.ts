@@ -228,7 +228,7 @@ export function mountCBCPanel(): void {
         <p><strong>Targeted bit-flip puzzle:</strong> change <code>admin=0</code> to <code>admin=1</code> without the key.</p>
         <p style="margin-top:0.5rem;font-size:0.85rem;">Plaintext layout (16-byte blocks):</p>
         <div class="hex-output" style="margin:0.3rem 0;">
-          [<span style="opacity:0.7">userdata=guest--</span>] [<span style="color:var(--accent);font-weight:700">;admin=0;-------</span>]
+          [<span style="color:var(--text-muted)">userdata=guest--</span>] [<span style="color:var(--accent);font-weight:700">;admin=0;-------</span>]
         </div>
         <p style="font-size:0.85rem;">In CBC, <code>P₁[i] = AES⁻¹(C₁)[i] ⊕ C₀[i]</code>. To flip bit 0 of P₁[7] (the '0'),
           we flip bit 0 of <strong>C₀[7]</strong>. Block 0 of plaintext is garbled, but block 1 changes <em>exactly</em> as we wanted.</p>

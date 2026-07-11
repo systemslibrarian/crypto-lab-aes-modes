@@ -6,6 +6,7 @@
 /* ---------- Custom properties ---------- */
 :root {
   /* Light mode (default) */
+  color-scheme: light;
   --bg: #f8f9fa;
   --bg-card: #ffffff;
   --bg-input: #ffffff;
@@ -14,12 +15,12 @@
   --border: #d1d5db;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
-  --accent-subtle: #dbeafe;
-  --danger: #dc2626;
+  --accent-subtle: #eaf2ff; /* was #dbeafe: --accent text on it = 4.24:1 → 4.59:1 */
+  --danger: #b91c1c; /* was #dc2626: 4.41:1 as text on --danger-bg → 5.91:1 */
   --danger-bg: #fef2f2;
-  --success: #16a34a;
+  --success: #15803d; /* was #16a34a: 3.15:1 as text on --success-bg → 4.79:1 */
   --success-bg: #f0fdf4;
-  --warning: #d97706;
+  --warning: #946200; /* was #d97706: 3.07:1 as text on --warning-bg → 5.05:1 */
   --warning-bg: #fffbeb;
   --code-bg: #f1f5f9;
   --focus-ring: #2563eb;
@@ -33,6 +34,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0f172a;
   --bg-card: #1e293b;
   --bg-input: #1e293b;
@@ -64,11 +66,12 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  background-color: var(--bg);
 }
 
 body {
   font-family: var(--font-sans);
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
@@ -101,7 +104,7 @@ body {
   top: -100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--accent);
+  background-color: var(--accent);
   color: #fff;
   padding: 0.75rem 1.5rem;
   border-radius: 0 0 var(--radius) var(--radius);
@@ -134,7 +137,7 @@ body {
   text-align: center;
   padding: 1.5rem 1rem 1rem;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
 }
 
 .header-top {
@@ -147,7 +150,7 @@ body {
 
 .category-chip {
   display: inline-block;
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
   color: var(--accent);
   font-size: 0.75rem;
   font-weight: 700;
@@ -180,7 +183,7 @@ body {
   margin: 0.75rem;
   border: 2px solid var(--border);
   border-radius: 50%;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text);
   box-shadow: var(--shadow);
   cursor: pointer;
@@ -190,7 +193,7 @@ body {
 }
 
 .theme-toggle:hover {
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
   color: var(--accent);
   border-color: var(--accent);
   transform: translateY(-1px);
@@ -213,7 +216,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-muted);
-  background: var(--bg);
+  background-color: var(--bg);
 }
 
 /* ---------- Why This Matters ---------- */
@@ -221,7 +224,7 @@ body {
   max-width: 900px;
   margin: 1.5rem auto;
   padding: 1rem 1rem;
-  background: var(--warning-bg);
+  background-color: var(--warning-bg);
   border: 1px solid var(--warning);
   border-radius: var(--radius);
 }
@@ -260,7 +263,7 @@ body {
   padding: 0.5rem 0.5rem;
   border: 2px solid transparent;
   border-bottom: 3px solid transparent;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -271,12 +274,12 @@ body {
 }
 
 .mode-tab:hover {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text);
 }
 
 .mode-tab[aria-selected="true"] {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text);
   border-bottom-color: var(--accent);
 }
@@ -298,32 +301,32 @@ body {
 }
 
 .status-avoid {
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
   border: 1px solid var(--danger);
 }
 
 .status-legacy {
-  background: var(--warning-bg);
+  background-color: var(--warning-bg);
   color: var(--warning);
   border: 1px solid var(--warning);
 }
 
 .status-acceptable {
-  background: var(--success-bg);
+  background-color: var(--success-bg);
   color: var(--success);
   border: 1px solid var(--success);
 }
 
 .status-recommended {
-  background: var(--success-bg);
+  background-color: var(--success-bg);
   color: var(--success);
   border: 2px solid var(--success);
   font-weight: 800;
 }
 
 .status-attack {
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
   border: 1px dashed var(--danger);
 }
@@ -360,7 +363,7 @@ body {
 
 /* ---------- Controls ---------- */
 .demo-controls {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem;
@@ -389,10 +392,21 @@ body {
   font-size: 0.85rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--bg-input);
+  background-color: var(--bg-input);
   color: var(--text);
   transition: border-color var(--transition);
   min-height: 44px;
+}
+
+.input-group select {
+  /* Opt out of native widget rendering: WebKit's UA path ignores the author
+     color on selects (reported as black-on-dark by axe). */
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238b949e' stroke-width='2' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  padding-right: 1.8rem;
+  cursor: pointer;
 }
 
 .input-group input[type="file"] {
@@ -444,23 +458,23 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background-color: var(--accent);
   color: #fff;
   border-color: var(--accent);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background-color: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--accent);
   border-color: var(--accent);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
 }
 
 .btn:disabled {
@@ -477,7 +491,7 @@ body {
 
 /* ---------- Output ---------- */
 .demo-output {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem;
@@ -510,7 +524,7 @@ body {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   word-break: break-all;
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   min-height: 2rem;
@@ -585,7 +599,7 @@ body {
 }
 
 .chain-block {
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   padding: 0.4rem 0.6rem;
@@ -626,7 +640,7 @@ body {
 }
 
 .stream-cell {
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.3rem 0.5rem;
@@ -636,7 +650,7 @@ body {
 .comparison-table {
   display: grid;
   gap: 1px;
-  background: var(--border);
+  background-color: var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   margin-top: 0.5rem;
@@ -650,13 +664,13 @@ body {
 .comparison-table [role="columnheader"],
 .comparison-table [role="cell"] {
   padding: 0.5rem 0.75rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   font-size: 0.82rem;
 }
 
 .comparison-table [role="columnheader"] {
   font-weight: 700;
-  background: var(--code-bg);
+  background-color: var(--code-bg);
 }
 
 .comp-header {
@@ -669,7 +683,7 @@ body {
   padding: 1rem;
   border: 2px dashed var(--warning);
   border-radius: var(--radius);
-  background: var(--warning-bg);
+  background-color: var(--warning-bg);
 }
 
 .vuln-output h3 {
@@ -718,19 +732,19 @@ body {
   font-size: 0.65rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   transition: background var(--transition);
 }
 
 .oracle-byte.recovered {
-  background: var(--success);
+  background-color: var(--success);
   color: #fff;
   border-color: var(--success);
 }
 
 .oracle-byte.active {
-  background: var(--warning);
-  color: #000;
+  background-color: var(--warning);
+  color: #fff; /* light --warning #946200 is dark: black text = 4.01:1, white = 5.24:1 */
   border-color: var(--warning);
   animation: pulse 1s ease-in-out infinite;
 }
@@ -769,7 +783,7 @@ body {
   max-height: 12rem;
   overflow-y: auto;
   padding: 0.5rem;
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -816,7 +830,7 @@ body {
 
 /* ---------- Explainer ---------- */
 .explainer {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem;
@@ -869,7 +883,7 @@ body {
   align-items: center;
   min-height: 44px;
   padding: 0.4rem 1rem;
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
   color: var(--accent);
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -881,7 +895,7 @@ body {
 }
 
 .cross-badge:hover {
-  background: var(--accent);
+  background-color: var(--accent);
   color: #fff;
 }
 
@@ -890,7 +904,11 @@ body {
   text-align: center;
   padding: 2rem 1rem;
   border-top: 1px solid var(--border);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
+}
+
+.footer-links a {
+  color: var(--accent); /* unstyled UA link blue fails contrast on the dark footer */
 }
 
 .scripture {
@@ -936,7 +954,7 @@ body {
   max-width: 900px;
   margin: 1.25rem auto 1rem;
   padding: 1rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -983,22 +1001,22 @@ body {
 }
 
 .decision-rec {
-  background: var(--success-bg);
+  background-color: var(--success-bg);
   color: var(--success);
 }
 
 .decision-ok {
-  background: var(--success-bg);
+  background-color: var(--success-bg);
   color: var(--success);
 }
 
 .decision-legacy {
-  background: var(--warning-bg);
+  background-color: var(--warning-bg);
   color: var(--warning);
 }
 
 .decision-avoid {
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
 }
 
@@ -1019,7 +1037,7 @@ body {
 
 .glossary-term:hover,
 .glossary-term:focus-visible {
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
 }
 
 .glossary-tip {
@@ -1031,7 +1049,7 @@ body {
   width: max-content;
   max-width: 18rem;
   padding: 0.6rem 0.75rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
@@ -1053,7 +1071,7 @@ body {
 .predict-prompt {
   margin: 0.75rem 0;
   padding: 0.6rem 0.75rem;
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
   border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
@@ -1077,14 +1095,14 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   border: 1px solid var(--accent);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--accent);
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 .predict-reveal:hover {
-  background: var(--accent);
+  background-color: var(--accent);
   color: #fff;
 }
 
@@ -1092,7 +1110,7 @@ body {
   display: block;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
@@ -1102,7 +1120,7 @@ body {
 .math-overlay {
   margin-top: 1rem;
   padding: 0.75rem;
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
 }
@@ -1167,7 +1185,7 @@ body {
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
 }
 
 .threat-col h4 {
@@ -1209,7 +1227,7 @@ body {
 .decrypt-section {
   margin: 1rem 0;
   padding: 0.85rem 1rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-left: 4px solid var(--accent);
   border-radius: var(--radius);
@@ -1234,7 +1252,7 @@ body {
 .decrypt-output {
   margin-top: 0.75rem;
   padding: 0.6rem 0.75rem;
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
 }
@@ -1247,7 +1265,7 @@ body {
   display: block;
   margin: 0.4rem 0;
   padding: 0.5rem;
-  background: var(--bg);
+  background-color: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -1281,7 +1299,7 @@ body {
 }
 
 .decrypt-bad-targeted {
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
   padding: 0.1rem 0.3rem;
   border-radius: 3px;
@@ -1292,7 +1310,7 @@ body {
 .quiz-card {
   margin: 1.25rem 0 0;
   padding: 0.85rem 1rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -1340,20 +1358,20 @@ body {
 }
 
 .quiz-correct {
-  background: var(--success-bg);
+  background-color: var(--success-bg);
   color: var(--success);
   border: 1px solid var(--success);
 }
 
 .quiz-incorrect {
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
   border: 1px solid var(--danger);
 }
 
 /* ---------- Compare grid ---------- */
 .status-compare {
-  background: var(--accent-subtle);
+  background-color: var(--accent-subtle);
   color: var(--accent);
   border: 1px solid var(--accent);
 }
@@ -1367,7 +1385,7 @@ body {
 
 .compare-card {
   padding: 0.75rem;
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -1401,7 +1419,7 @@ body {
 .compare-dup-warn {
   margin-top: 0.3rem;
   padding: 0.3rem 0.5rem;
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
@@ -1426,7 +1444,7 @@ body {
 .oracle-math {
   margin-top: 0.75rem;
   padding: 0.6rem 0.75rem;
-  background: var(--code-bg);
+  background-color: var(--code-bg);
   border: 1px dashed var(--accent);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
@@ -1500,3 +1518,4 @@ body {
 [data-theme="dark"] .oracle-byte.recovered { background-color: #2c844c; } /* was #4ade80 on #ffffff = 1.74:1 → 4.65:1 */
 [data-theme="dark"] .cross-badge:hover { background-color: #4577b4; } /* was #60a5fa on #ffffff = 2.54:1 → 4.61:1 */
 [data-theme="dark"] .predict-reveal:hover { background-color: #4577b4; } /* was #60a5fa on #ffffff = 2.54:1 → 4.61:1 */
+[data-theme="dark"] .oracle-byte.active { color: #000; } /* dark --warning #fbbf24 is light: black = 12.58:1 */
