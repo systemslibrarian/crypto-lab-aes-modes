@@ -1,6 +1,12 @@
 /**
  * ccm.ts — CCM mode (RFC 3610 / NIST SP 800-38C) with full encrypt + decrypt + tamper demo.
  * Built from @noble/ciphers single-block AES (ECB disablePadding).
+ *
+ * Correctness is pinned by unit tests: src/ccm.test.ts checks this
+ * implementation against the four RFC 3610 known-answer vectors and against
+ * @noble/ciphers' independent CCM. The AAD length prefix follows the full
+ * RFC 3610 §2.2 encoding (2-byte, 6-byte 0xFFFE, and 10-byte 0xFFFF forms),
+ * not only the <2^16 case.
  */
 
 import { ecb } from '@noble/ciphers/aes';
@@ -9,7 +15,7 @@ import { ccmMath, renderMath } from './helpers';
 
 const BLOCK = 16;
 
-function aesBlock(key: Uint8Array, block: Uint8Array): Uint8Array {
+export function aesBlock(key: Uint8Array, block: Uint8Array): Uint8Array {
   const cipher = ecb(key, { disablePadding: true });
   return cipher.encrypt(block);
 }
@@ -27,7 +33,7 @@ function ctEqual(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
-function formatB0(
+export function formatB0(
   nonce: Uint8Array,
   plaintextLen: number,
   aadLen: number,
@@ -46,18 +52,53 @@ function formatB0(
   return b0;
 }
 
-function formatAAD(aad: Uint8Array): Uint8Array {
+/**
+ * Encode the length prefix for the associated data per RFC 3610 §2.2 /
+ * NIST SP 800-38C A.2.2. The prefix width depends on the AAD length `a`:
+ *   0 < a < 2^16 - 2^8   → 2 bytes, big-endian
+ *   2^16 - 2^8 <= a < 2^32 → 0xFF 0xFE, then 4 bytes big-endian
+ *   2^32 <= a < 2^64       → 0xFF 0xFF, then 8 bytes big-endian
+ * (JavaScript numbers are used for the demo's practical range; the 2^64 arm
+ * is expressed for completeness but AAD that large is not representable here.)
+ */
+export function encodeAADLength(aadLen: number): Uint8Array {
+  if (aadLen < 0xff00) {
+    return Uint8Array.of((aadLen >>> 8) & 0xff, aadLen & 0xff);
+  }
+  if (aadLen < 0x1_0000_0000) {
+    return Uint8Array.of(
+      0xff,
+      0xfe,
+      (aadLen >>> 24) & 0xff,
+      (aadLen >>> 16) & 0xff,
+      (aadLen >>> 8) & 0xff,
+      aadLen & 0xff,
+    );
+  }
+  // 2^32 <= a < 2^64: 0xFF 0xFF followed by an 8-byte big-endian length.
+  const out = new Uint8Array(10);
+  out[0] = 0xff;
+  out[1] = 0xff;
+  let len = aadLen;
+  for (let i = 9; i >= 2; i--) {
+    out[i] = len % 256;
+    len = Math.floor(len / 256);
+  }
+  return out;
+}
+
+export function formatAAD(aad: Uint8Array): Uint8Array {
   if (aad.length === 0) return new Uint8Array(0);
-  const encoded = new Uint8Array(2 + aad.length);
-  encoded[0] = (aad.length >> 8) & 0xff;
-  encoded[1] = aad.length & 0xff;
-  encoded.set(aad, 2);
+  const prefix = encodeAADLength(aad.length);
+  const encoded = new Uint8Array(prefix.length + aad.length);
+  encoded.set(prefix);
+  encoded.set(aad, prefix.length);
   const padded = new Uint8Array(Math.ceil(encoded.length / BLOCK) * BLOCK);
   padded.set(encoded);
   return padded;
 }
 
-function formatCtrBlock(nonce: Uint8Array, counter: number): Uint8Array {
+export function formatCtrBlock(nonce: Uint8Array, counter: number): Uint8Array {
   const q = 15 - nonce.length;
   const a = new Uint8Array(BLOCK);
   a[0] = q - 1;
@@ -70,7 +111,7 @@ function formatCtrBlock(nonce: Uint8Array, counter: number): Uint8Array {
   return a;
 }
 
-function computeMac(
+export function computeMac(
   key: Uint8Array,
   nonce: Uint8Array,
   data: Uint8Array,

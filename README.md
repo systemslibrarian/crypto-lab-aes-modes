@@ -35,6 +35,18 @@ The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, th
 - **Bluetooth Low Energy:** BLE uses AES-CCM at the link layer for confidentiality and message authentication.
 - **Zigbee / IEEE 802.15.4:** low-power mesh networking standards use the CCM family for authenticated encryption.
 
+## Correctness & Tests
+
+Most modes here delegate to the platform's audited `WebCrypto` (AES-CBC, AES-CTR, AES-GCM). The two hand-rolled pieces — the `CCM` construction (`formatB0` / CBC-MAC / CTR in `src/ccm.ts`) and the `ECB` block loop — are the custom crypto, so they are pinned by unit tests:
+
+- **CCM** is checked against all four `AES-128` known-answer vectors from **RFC 3610 §8** (encrypt *and* decrypt), plus forgery-rejection tests (flipped ciphertext bit, flipped tag bit, modified `AAD`, wrong nonce) and round-trips across several lengths and tag sizes. The `AAD` length prefix now implements the full RFC 3610 §2.2 encoding (the 2-byte, `0xFFFE`+4-byte, and `0xFFFF`+8-byte forms), not just the `<2^16` case.
+- **ECB** pins the raw AES block permutation to the **FIPS-197** and **NIST SP 800-38A F.1.1** vectors, and tests that the duplicate-block detector (the ECB pattern-leak exhibit) actually flags — and never fabricates — repeated blocks.
+
+```bash
+npm test        # vitest unit + known-answer tests (crypto)
+npm run test:a11y  # Playwright functional-exhibit + WCAG A/AA gate
+```
+
 ## How to Run Locally
 
 ```bash
