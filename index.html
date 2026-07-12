@@ -133,29 +133,25 @@
 <!-- END crypto-lab shared header -->
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <header class="site-header" role="banner">
-    <div class="header-top">
-      <span class="category-chip" aria-label="Category: Block Cipher Modes">Block Cipher Modes</span>
+  <header class="cl-hero">
+    <div class="cl-hero-main">
+      <h1 class="cl-hero-title">AES Modes</h1>
+      <p class="cl-hero-sub">Block Cipher Modes · ECB · CBC · CTR · GCM · CCM</p>
+      <p class="cl-hero-desc">Encrypt the same plaintext under each AES mode side by side — watch ECB leak structure, flip CBC ciphertext bits, and run a live padding-oracle attack that recovers plaintext.</p>
+      <div class="primitive-chips" role="list" aria-label="Cryptographic primitives used">
+        <span class="chip" role="listitem">AES-128</span>
+        <span class="chip" role="listitem">AES-256</span>
+        <span class="chip" role="listitem">GCM</span>
+        <span class="chip" role="listitem">CBC</span>
+        <span class="chip" role="listitem">CTR</span>
+        <span class="chip" role="listitem">ECB</span>
+        <span class="chip" role="listitem">CCM</span>
+      </div>
     </div>
-    <button
-      id="theme-toggle"
-      type="button"
-      class="theme-toggle"
-      style="position: absolute; top: 0; right: 0;"
-      aria-label="Switch to light mode"
-      title="Switch to light mode"
-    >🌙</button>
-    <h1 class="demo-title">AES Modes</h1>
-    <p class="demo-subtitle">How mode choice dramatically affects security properties</p>
-    <div class="primitive-chips" role="list" aria-label="Cryptographic primitives used">
-      <span class="chip" role="listitem">AES-128</span>
-      <span class="chip" role="listitem">AES-256</span>
-      <span class="chip" role="listitem">GCM</span>
-      <span class="chip" role="listitem">CBC</span>
-      <span class="chip" role="listitem">CTR</span>
-      <span class="chip" role="listitem">ECB</span>
-      <span class="chip" role="listitem">CCM</span>
-    </div>
+    <aside class="cl-hero-why" aria-label="Why it matters">
+      <span class="cl-hero-why-label">WHY IT MATTERS</span>
+      <p class="cl-hero-why-text">The AES cipher is only as safe as the mode wrapped around it. Pick wrong and you leak plaintext structure, permit bit-flips, or hand an attacker full recovery via a padding oracle — while the key stays perfectly secret.</p>
+    </aside>
   </header>
 
   <main id="main-content">
