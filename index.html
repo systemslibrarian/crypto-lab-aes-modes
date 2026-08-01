@@ -549,7 +549,7 @@
         <h3>Nonce Discipline Is Everything</h3>
         <p>If two messages are encrypted with the same key and nonce, XORing the two ciphertexts cancels out the keystream: C₁ ⊕ C₂ = P₁ ⊕ P₂. An attacker who knows (or guesses) one plaintext can recover the other. CTR is secure <em>only</em> when every (key, nonce) pair is unique.</p>
         <p><strong>Real-world incident:</strong>
-          <a href="https://www.usenix.org/system/files/sec22-baillon.pdf" target="_blank" rel="noopener noreferrer">Nintendo Switch boot ROM (2018)</a> reused CTR nonces in early production; multiple academic case studies have similar findings for hand-rolled CTR.</p>
+          Microsoft Word and Excel 97&ndash;2003 encrypted documents with RC4 but kept the same initialization vector when an encrypted document was edited and re-saved, so successive versions of the same file were encrypted with the <em>same keystream</em>. XORing two saved versions cancels the keystream and exposes the differences between them &mdash; the identical failure mode as CTR nonce reuse, shipped in a mass-market product. See Hongjun Wu, <a href="https://eprint.iacr.org/2005/007" target="_blank" rel="noopener noreferrer">&ldquo;The Misuse of RC4 in Microsoft Word and Excel&rdquo; (IACR ePrint 2005/007)</a>.</p>
       </div>
 
       <!-- Self check -->
