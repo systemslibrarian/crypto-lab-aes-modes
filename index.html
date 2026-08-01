@@ -314,7 +314,7 @@
         <p>ECB encrypts each 16-byte block independently. This means repeated plaintext blocks always produce repeated ciphertext blocks. An attacker learns <em>where</em> repetition occurs — destroying confidentiality for structured data like images, database fields, or protocol messages.</p>
         <p><strong>Real-world incidents:</strong>
           the famous <a href="https://blog.filippo.io/the-ecb-penguin/" target="_blank" rel="noopener noreferrer">ECB penguin</a> illustrates the leak;
-          early WEP and several enterprise SSO cookies have shipped ECB and been broken in production.</p>
+          Adobe's 2013 password breach stored ~150M credentials under 3DES in ECB mode, and several enterprise SSO cookies have shipped ECB and been broken in production.</p>
         <p><strong>Implementation note:</strong> WebCrypto does not support ECB natively. This demo implements ECB by encrypting each 16-byte block individually using AES-CBC with a zero IV, which for a single block is equivalent to ECB encryption. This approach is documented honestly — ECB is shown only to demonstrate why it must be avoided.</p>
       </div>
 
@@ -359,7 +359,7 @@
           <span class="predict-label">Predict:</span>
           If you flip ONE bit of CBC ciphertext byte 0, how many bytes of plaintext will be garbled on decryption?
           <button type="button" class="predict-reveal" aria-expanded="false">Reveal</button>
-          <span class="predict-answer">A whole 16-byte block — block 1 — gets completely garbled. Block 0 changes by exactly the same bit. That bit-flip-with-block-garble is the basis of the CBC bit-flip attack.</span>
+          <span class="predict-answer">A whole 16-byte block — block 0 — gets completely garbled. Block 1 changes by exactly the same bit. That bit-flip-with-block-garble is the basis of the CBC bit-flip attack.</span>
         </div>
         <div class="btn-row">
           <button id="cbc-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CBC mode">Encrypt with CBC</button>
