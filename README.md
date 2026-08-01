@@ -25,7 +25,7 @@ The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, th
 - **CBC padding oracle exposure:** if a system reveals whether `PKCS#7` padding is valid, an attacker can recover the plaintext byte by byte.
 - **CBC bit-flipping:** without authentication, modifying one ciphertext block predictably changes bits in the next plaintext block.
 - **`CTR` or `GCM` nonce reuse:** reusing the same `(key, nonce)` pair leaks relationships between messages, and in GCM can enable forgery attacks.
-- **GCM tag truncation:** shorter authentication tags reduce forgery resistance, which is why the UI marks 128-bit tags as the recommended choice.
+- **GCM tag truncation:** a truncated tag is worse than the naive "one guess in `2^t`" bound suggests. NIST SP 800-38D Appendix B states that with GCM "an adversary can choose tags that increase this probability, proportional to the total length of the ciphertext and AAD" — a targeted forgery succeeds with probability approximately `n/2^t` for an `n`-block ciphertext+AAD, and each success leaks information about the GHASH subkey `H`, so later forgeries get easier. That is why 32- and 64-bit tags are confined to SP 800-38D Appendix C with hard caps on message length and invocation count, and why the UI marks 128-bit tags as the recommended choice.
 
 ## Real-World Usage
 
@@ -40,7 +40,7 @@ The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, th
 Most modes here delegate to the platform's audited `WebCrypto` (AES-CBC, AES-CTR, AES-GCM). The two hand-rolled pieces — the `CCM` construction (`formatB0` / CBC-MAC / CTR in `src/ccm.ts`) and the `ECB` block loop — are the custom crypto, so they are pinned by unit tests:
 
 - **CCM** is checked against four of the `AES-128` known-answer vectors from **RFC 3610 §8** (Packet Vectors #1–#4, encrypt *and* decrypt), plus forgery-rejection tests (flipped ciphertext bit, flipped tag bit, modified `AAD`, wrong nonce) and round-trips across several lengths and tag sizes. The `AAD` length prefix now implements the full RFC 3610 §2.2 encoding (the 2-byte, `0xFFFE`+4-byte, and `0xFFFF`+8-byte forms), not just the `<2^16` case.
-- **ECB** pins the raw AES block permutation to the **FIPS-197** and **NIST SP 800-38A F.1.1** vectors, and tests that the duplicate-block detector (the ECB pattern-leak exhibit) actually flags — and never fabricates — repeated blocks.
+- **ECB** pins the raw AES block permutation to the **FIPS 197 (2001) Appendix C.1** AES-128 vector and the four **NIST SP 800-38A Appendix F.1.1** ECB-AES128 vectors, and tests that the duplicate-block detector (the ECB pattern-leak exhibit) actually flags — and never fabricates — repeated blocks.
 
 ```bash
 npm test        # vitest unit + known-answer tests (crypto)

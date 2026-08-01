@@ -115,7 +115,16 @@ export function mountGCMPanel(): void {
       ctOut.textContent = hexEncode(ciphertext);
       tagOut.textContent = hexEncode(tag);
       if (currentTagLength < 128) {
-        tagOut.textContent += ` ⚠ ${currentTagLength}-bit tag: ~2^${currentTagLength} attempts for forgery`;
+        // Do NOT print "~2^t attempts". NIST SP 800-38D Appendix B is explicit
+        // that GCM does WORSE than the generic 1/2^t bound: a targeted forgery
+        // succeeds with probability approximately n/2^t, where n is the number
+        // of blocks of ciphertext + AAD, and each success leaks the hash
+        // subkey H, making later forgeries easier still.
+        const blocks =
+          Math.ceil(ciphertext.length / 16) + Math.ceil(currentAAD.length / 16);
+        tagOut.textContent +=
+          ` ⚠ ${currentTagLength}-bit tag: a targeted forgery succeeds with probability` +
+          ` ~n/2^${currentTagLength}, n = ${blocks} block(s) of ciphertext+AAD — not 2^-${currentTagLength}`;
       }
       renderMath(mathRows, gcmMath(currentNonce, plain, ciphertext, tag));
       mathBox.hidden = false;
@@ -154,8 +163,13 @@ export function mountGCMPanel(): void {
           </p>
           ${currentTagLength < 128 ? `
           <p style="margin-top:0.75rem;padding:0.5rem;background-color:var(--warning-bg);border:1px solid var(--warning);border-radius:4px;font-size:0.82rem;">
-            <strong>Tag truncation note (NIST SP 800-38D §5.2.1.2):</strong> With a ${currentTagLength}-bit tag,
-            forgery probability per attempt is ≤ 2<sup>−${currentTagLength}</sup>. For maximum security, use 128-bit tags.
+            <strong>Tag truncation note (NIST SP 800-38D Appendix B):</strong> a random ${currentTagLength}-bit tag
+            guess is correct with probability 2<sup>−${currentTagLength}</sup>, but GCM does not hold that line.
+            NIST states that "an adversary can choose tags that increase this probability, proportional to the
+            total length of the ciphertext and AAD": a targeted forgery succeeds with probability approximately
+            <em>n</em>/2<sup>${currentTagLength}</sup> for an <em>n</em>-block input, and every success leaks
+            information about the GHASH subkey H, so later forgeries get easier. That is why SP 800-38D confines
+            32- and 64-bit tags to Appendix C, with hard caps on message length and invocation count. Use 128-bit tags.
           </p>` : ''}
         `;
       }

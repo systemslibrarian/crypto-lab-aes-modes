@@ -175,7 +175,11 @@ export function ctrMath(
     steps.push({
       label: `Block ${i}`,
       expression: `keystream = AES_K(${nonceHex}||${(i + 1).toString().padStart(8, '0')}); C${i} = P${i} ⊕ keystream = ${short(p)} ⊕ ks = ${short(c)}`,
-      note: i === 0 ? 'counter starts at 1 (block 0 reserved for tag in GCM/CCM)' : 'each block uses next counter value',
+      // Plain CTR has no reserved counter block — nothing in SP 800-38A sets
+      // one aside. This panel's makeCounter() simply starts the 32-bit counter
+      // field at 1; the note must describe that choice, not borrow GCM/CCM's
+      // reason for skipping counter 0.
+      note: i === 0 ? 'this panel starts the 32-bit counter field at 1' : 'each block uses the next counter value',
     });
   }
   if (numBlocks > maxBlocks) {

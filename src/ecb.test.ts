@@ -5,7 +5,8 @@
  * decrypts with @noble/ciphers ECB, then relies on analyzeBlocks() to surface
  * the "identical plaintext blocks → identical ciphertext blocks" leak that is
  * the whole point of the exhibit. These tests:
- *   1. pin the raw AES block permutation to FIPS-197 / NIST SP 800-38A KATs, and
+ *   1. pin the raw AES block permutation to the FIPS 197 (2001) Appendix C.1
+ *      and NIST SP 800-38A Appendix F.1.1 KATs, and
  *   2. verify analyzeBlocks() actually detects (and does not fabricate) the
  *      duplicate-block structure the UI advertises.
  */
@@ -22,7 +23,12 @@ const he = (b: Uint8Array): string =>
     .join('');
 
 describe('AES single-block permutation (known-answer vectors)', () => {
-  it('matches the FIPS-197 Appendix B / C.1 AES-128 example', () => {
+  // Cited precisely: this is the AES-128 vector from Appendix C.1 of the
+  // ORIGINAL FIPS 197 (2001). It is not the Appendix B "Cipher Example", which
+  // uses key 2b7e1516..3c and input 3243f6a8..34, and it is no longer in
+  // Appendix C at all — FIPS 197-upd1 (May 2023) replaced the example-vector
+  // appendix with a pointer to the NIST CSRC example-values page.
+  it('matches the FIPS 197 (2001) Appendix C.1 AES-128 vector', () => {
     const key = hx('000102030405060708090a0b0c0d0e0f');
     const pt = hx('00112233445566778899aabbccddeeff');
     const ct = ecb(key, { disablePadding: true }).encrypt(pt);

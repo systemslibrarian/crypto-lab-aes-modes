@@ -166,6 +166,16 @@ export function mountCTRPanel(): void {
       const xored = xorBytes(c1, c2);
       const recoveredP2 = xorBytes(xored, p1);
       const recoveredText = bytesToText(recoveredP2.slice(0, p2.length));
+      // The keystream only cancels where the two messages overlap. If P2 is the
+      // longer message, its tail is NOT recovered, and the banner must not
+      // claim otherwise. recoveredP2.length is min(|P1|, |P2|) by construction.
+      const recoveredBytes = Math.min(recoveredP2.length, p2.length);
+      const fullyRecovered = recoveredBytes === p2.length;
+      const verdictLine = fullyRecovered
+        ? `⚠ All ${recoveredBytes} bytes of P₂ recovered. Nonce reuse destroys CTR security.`
+        : `⚠ ${recoveredBytes} of ${p2.length} bytes of P₂ recovered — the keystream only cancels where the two ` +
+          `messages overlap, and P₁ is the shorter one. Make P₁ at least as long as P₂ to recover all of it. ` +
+          `Nonce reuse destroys CTR security.`;
       nonceOutput.hidden = false;
       nonceContent.innerHTML = `
         <p><strong>Both messages encrypted with the same nonce:</strong></p>
@@ -182,7 +192,7 @@ export function mountCTRPanel(): void {
           ${escapeHtml(recoveredText)}
         </div>
         <p style="margin-top:0.5rem;font-weight:700;color:var(--danger);">
-          ⚠ Full plaintext recovered! Nonce reuse destroys CTR security.
+          ${escapeHtml(verdictLine)}
         </p>
       `;
     } catch (err) {
