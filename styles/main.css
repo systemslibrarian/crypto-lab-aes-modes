@@ -13,6 +13,12 @@
   --text: #1a1a2e;
   --text-muted: #555568;
   --border: #d1d5db;
+  /* Control boundaries only. Text inputs/selects/textareas are filled with
+     --bg-input, the same colour as the --bg-card panel behind them (1:1), and the
+     theme toggle and GitHub badge are unfilled, so in each case the border is the
+     sole boundary and WCAG 2.1 SC 1.4.11 requires 3:1. --border is unchanged for
+     decorative rules (card outlines, table rules, hex/log frames). */
+  --border-strong: #848f9f;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-subtle: #eaf2ff; /* was #dbeafe: --accent text on it = 4.24:1 → 4.59:1 */
@@ -41,6 +47,7 @@
   --text: #e2e8f0;
   --text-muted: #94a3b8;
   --border: #334155;
+  --border-strong: #5c7599;
   --accent: #60a5fa;
   --accent-hover: #93bbfd;
   --accent-subtle: #1e3a5f;
@@ -193,7 +200,7 @@ body {
   width: 2.6rem;
   height: 2.6rem;
   margin: 0.75rem;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-strong);
   border-radius: 50%;
   background-color: var(--bg-card);
   color: var(--text);
@@ -402,7 +409,7 @@ body {
   padding: 0.6rem 0.75rem;
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background-color: var(--bg-input);
   color: var(--text);
@@ -943,7 +950,7 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   transition: border-color var(--transition);
 }
