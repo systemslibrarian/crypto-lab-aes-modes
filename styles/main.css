@@ -173,7 +173,6 @@ body {
   margin-bottom: 1rem;
 }
 
-/* BEGIN cl-hero standard — managed, keep in sync across fleet */
 /* --text-dim mapped to this demo's --text-muted */
 .cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) auto 1.5rem;max-width:900px;padding:0 1rem;}
 .cl-hero-main{flex:1 1 22rem;min-width:min(100%,20rem);}
@@ -183,9 +182,8 @@ body {
 .cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--accent) 6%,transparent);}
 .cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;}
 .cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;}
-@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}}
+@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}.cl-hero-main{flex-basis:auto;min-width:0;}}
 .cl-hero .primitive-chips{justify-content:flex-start;margin-top:.9rem;}
-/* END cl-hero standard */
 
 /* ---------- Theme toggle ---------- */
 .theme-toggle {
