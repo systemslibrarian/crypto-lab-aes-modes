@@ -7,6 +7,7 @@ import { mountECBPanel } from './ecb';
 import { mountCBCPanel } from './cbc';
 import { mountCTRPanel } from './ctr';
 import { mountGCMPanel } from './gcm';
+import { mountForbiddenPanel } from './forbidden';
 import { mountCCMPanel } from './ccm';
 import { mountOraclePanel } from './oracle';
 import { mountComparePanel } from './compare';
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   mountCBCPanel();
   mountCTRPanel();
   mountGCMPanel();
+  mountForbiddenPanel();
   mountCCMPanel();
   mountOraclePanel();
   mountComparePanel();

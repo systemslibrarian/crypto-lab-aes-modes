@@ -49,6 +49,36 @@ test('GCM rejects a tampered ciphertext', async ({ page }) => {
   await expect(out).not.toContainText(/Unexpected/i);
 });
 
+test('forbidden attack: nonce reuse lets WebCrypto accept a forged ciphertext', async ({
+  page,
+}) => {
+  await page.goto('.');
+  await openTab(page, 'gcm');
+
+  // Reuse the nonce → recover H → forge. The REAL WebCrypto AES-GCM verifier
+  // must accept the forged (ciphertext, tag) and return the attacker's text.
+  await page.locator('#forbidden-run-btn').click();
+  const out = page.locator('#forbidden-output');
+  await expect(out).toBeVisible();
+  await expect(out.locator('[data-verdict="accepted"]')).toBeVisible();
+  await expect(out).toContainText(/ACCEPTED the forgery/i);
+  await expect(out).toContainText('PAY EVE $10000!!');
+});
+
+test('forbidden attack control: a fresh nonce makes WebCrypto REJECT the forgery', async ({
+  page,
+}) => {
+  await page.goto('.');
+  await openTab(page, 'gcm');
+
+  await page.locator('#forbidden-control-btn').click();
+  const out = page.locator('#forbidden-output');
+  await expect(out).toBeVisible();
+  await expect(out.locator('[data-verdict="rejected"]')).toBeVisible();
+  await expect(out).toContainText(/REJECTED the forgery/i);
+  await expect(out).not.toContainText(/Unexpected/i);
+});
+
 test('hand-rolled CCM rejects a tampered ciphertext', async ({ page }) => {
   await page.goto('.');
   await openTab(page, 'ccm');

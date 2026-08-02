@@ -672,7 +672,7 @@
         <div class="threat-col threat-can">
           <h4>An attacker CAN</h4>
           <ul>
-            <li>If nonce reuses: forge messages and recover the GHASH subkey H ("forbidden attack")</li>
+            <li>If nonce reuses: recover the GHASH subkey H and forge messages ("forbidden attack") — demonstrated live below against the real WebCrypto verifier</li>
             <li>Make the receiver reject messages by tampering — denial of service</li>
             <li>Try ~2<sup>tagbits</sup> forgeries per message if the tag is truncated</li>
           </ul>
@@ -693,6 +693,46 @@
         <p><strong>Tag truncation:</strong> Per <strong>NIST SP 800-38D §5.2.1.2</strong>, truncating the authentication tag below 128 bits reduces the effort required for a forgery attack. A <em>t</em>-bit tag provides at most 2<sup>−t</sup> forgery probability per attempt. Tags shorter than 96 bits are not recommended.</p>
         <p><strong>Real-world incident:</strong>
           the <a href="https://eprint.iacr.org/2016/475.pdf" target="_blank" rel="noopener noreferrer">"forbidden attack" (Joux, 2006)</a> — if a GCM nonce ever repeats, the attacker can recover H and forge arbitrary ciphertexts; multiple HTTPS frontends shipped repeating nonces before this was widely audited.</p>
+      </div>
+
+      <!-- Forbidden attack: live nonce-reuse forgery -->
+      <div class="vuln-output" id="forbidden-panel">
+        <h3 id="forbidden-title">Live: the forbidden attack (nonce-reuse forgery)</h3>
+        <p class="panel-desc">
+          This runs the attack for real. Two messages are encrypted under a fresh
+          AES-256-GCM key; the button below reuses the nonce across both. From the
+          two captured (ciphertext, tag) pairs alone, the page recovers the GHASH
+          subkey <strong>H</strong> in GF(2<sup>128</sup>), recovers
+          <strong>S = E<sub>K</sub>(J₀)</strong>, and forges a brand-new
+          (ciphertext, tag) that <strong>real WebCrypto AES-GCM decrypt</strong>
+          then accepts — decrypting to an attacker-chosen message.
+        </p>
+        <p class="hint" style="margin-bottom:0.75rem;">
+          <strong>Scale, stated plainly:</strong> both captured messages are exactly
+          one AES block (16 bytes) with empty AAD. Equal length makes the GHASH
+          length term cancel, so H is recovered <em>uniquely</em> via a square root
+          in GF(2<sup>128</sup>) — no candidate-root search. The general multi-block
+          attack yields several candidate roots to sieve against the oracle; the
+          recovered H is just as real. Nothing here is hardcoded — the proof is that
+          the browser's own verifier accepts the forgery.
+        </p>
+        <div class="input-group">
+          <label for="forbidden-p1">Message 1 plaintext (captured, ≤16 bytes)</label>
+          <input type="text" id="forbidden-p1" value="PAY BOB $10.00!!" maxlength="16">
+        </div>
+        <div class="input-group">
+          <label for="forbidden-p2">Message 2 plaintext (captured, ≤16 bytes)</label>
+          <input type="text" id="forbidden-p2" value="HELLO SECOND MSG" maxlength="16">
+        </div>
+        <div class="input-group">
+          <label for="forbidden-forged">Forged plaintext to smuggle in (≤16 bytes)</label>
+          <input type="text" id="forbidden-forged" value="PAY EVE $10000!!" maxlength="16">
+        </div>
+        <div class="btn-row">
+          <button id="forbidden-run-btn" class="btn btn-primary" aria-label="Recover H and forge a ciphertext by reusing the nonce">Reuse nonce &rarr; recover H &rarr; forge</button>
+          <button id="forbidden-control-btn" class="btn btn-secondary" aria-label="Run the same attack with a fresh nonce as a control">Control: fresh nonce (should fail)</button>
+        </div>
+        <div id="forbidden-output" class="decrypt-output" role="region" aria-labelledby="forbidden-title" aria-live="polite" hidden></div>
       </div>
 
       <!-- Self check -->
