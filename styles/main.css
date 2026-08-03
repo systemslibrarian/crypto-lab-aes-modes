@@ -1125,6 +1125,15 @@ body {
   color: #fff;
 }
 
+/* The UA rule [hidden]{display:none} loses to ANY author display, so this
+   block-level answer rendered even while the span carried the hidden
+   attribute — every quiz answer was on screen before the learner predicted.
+   Restore the attribute's meaning for the whole page rather than for this
+   one class, since the next hidden element would hit the same trap. */
+[hidden] {
+  display: none !important;
+}
+
 .predict-answer {
   display: block;
   margin-top: 0.5rem;
