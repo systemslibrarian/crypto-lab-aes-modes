@@ -1,84 +1,37 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { test } from '@playwright/test';
+import { boot, driveAllStates, NARROW } from './gate';
 
 /**
- * WCAG regression gate. Deploys are already gated on the build; this gates
- * them on accessibility the same way. Scans the full page — every tab panel
- * revealed, every collapsible/[hidden] region opened, live demos driven — in
- * both themes.
+ * WCAG A/AA regression gate.
+ *
+ * The lab is driven the way a visitor drives it and scanned after every single
+ * step: all seven mode tabs opened one at a time, each panel encrypted, every
+ * vulnerability demo run, every decrypt variant (correct, wrong key, wrong IV,
+ * wrong nonce, wrong AAD, tampered) rendered in its own right, the ECB penguin
+ * comparison driven with a real uploaded image, the live GCM forbidden attack
+ * run and controlled, the five-mode comparison built with and without repeated
+ * blocks, the padding oracle set up and run to full recovery, and every
+ * self-check answered both right and wrong. Every resulting state is scanned in
+ * both themes at desktop and phone width.
+ *
+ * See `gate.ts` for why nothing is injected into the page, why no `[hidden]`
+ * attribute is stripped and no `<details>` forced open from script, why the
+ * drive asserts this lab's defaults instead of assuming them, why every step is
+ * scanned rather than only the last, and why `violations` is not the whole
+ * oracle.
  */
 
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+for (const theme of ['dark', 'light'] as const) {
+  test(`no WCAG A/AA violations in ${theme} theme`, async ({ page }) => {
+    test.setTimeout(1_800_000);
+    await boot(page, theme);
+    await driveAllStates(page, theme);
+  });
 
-async function killMotion(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}`,
+  test(`no WCAG A/AA violations in ${theme} theme at 380px`, async ({ page }) => {
+    test.setTimeout(1_800_000);
+    await page.setViewportSize(NARROW);
+    await boot(page, theme);
+    await driveAllStates(page, `${theme} @380px`);
   });
 }
-
-/** Reveal everything axe would otherwise skip: all tab panels, <details>, and
- *  any element hidden via the [hidden] attribute or a display-toggling class. */
-async function revealAll(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    // Expand any native disclosure widgets.
-    for (const d of document.querySelectorAll('details')) d.open = true;
-    // Show every tab panel simultaneously so their contents get scanned.
-    for (const p of document.querySelectorAll<HTMLElement>('[role="tabpanel"]')) {
-      p.hidden = false;
-      p.removeAttribute('hidden');
-    }
-    // Un-hide anything else toggled off via the hidden attribute.
-    for (const el of document.querySelectorAll<HTMLElement>('[hidden]')) {
-      el.hidden = false;
-      el.removeAttribute('hidden');
-    }
-  });
-}
-
-/** Click every "encrypt" / demo trigger so dynamically-rendered output (which
- *  is where contrast/aria regressions usually hide) is present when we scan. */
-async function driveDemos(page: Page): Promise<void> {
-  const triggers = page.locator(
-    'button[id$="-encrypt-btn"], button.predict-reveal, button.quiz-check',
-  );
-  const count = await triggers.count();
-  for (let i = 0; i < count; i++) {
-    const btn = triggers.nth(i);
-    if (await btn.isVisible().catch(() => false)) {
-      await btn.click({ trial: false }).catch(() => {});
-    }
-  }
-  // Let any async crypto output render.
-  await page.waitForTimeout(300);
-  // Re-reveal — a demo may have created fresh [hidden] output regions.
-  await revealAll(page);
-}
-
-async function scan(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  const summary = results.violations.map((v) => ({
-    id: v.id,
-    impact: v.impact,
-    help: v.help,
-    nodes: v.nodes.map((n) => n.target.join(' ')).slice(0, 5),
-  }));
-  expect(summary).toEqual([]);
-}
-
-test('no WCAG A/AA violations in dark theme', async ({ page }) => {
-  await page.goto('.');
-  await killMotion(page);
-  await revealAll(page);
-  await driveDemos(page);
-  await scan(page);
-});
-
-test('no WCAG A/AA violations in light theme', async ({ page }) => {
-  await page.goto('.');
-  await killMotion(page);
-  await page.locator('#cl-theme-toggle').click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await revealAll(page);
-  await driveDemos(page);
-  await scan(page);
-});

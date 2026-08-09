@@ -13,6 +13,14 @@ import { hexEncode } from './ui';
 // ─── Glossary terms ──────────────────────────────────────────────
 
 const GLOSSARY: Record<string, string> = {
+  // Every [data-term] in index.html needs an entry here. A term with no entry
+  // is skipped by mountGlossary(), but it keeps the .glossary class from the
+  // markup — so it still paints a dotted accent underline and a `cursor: help`,
+  // still promises a definition, and delivers none: no tooltip, no accessible
+  // name, not focusable, nothing on hover. ECB was in exactly that state, in
+  // the decision tree above the fold and again in the ECB panel description —
+  // the one term this whole lab is built around.
+  ECB: 'Electronic Codebook — the mode that encrypts each block independently, with no IV and no chaining, so identical plaintext blocks always produce identical ciphertext blocks. Never appropriate for multi-block data.',
   IV: 'Initialization Vector — a per-message public value that randomizes encryption so the same plaintext never produces the same ciphertext. Must be unpredictable for CBC.',
   Nonce: 'Number used once — a per-message value that must never repeat with the same key. Reuse is catastrophic for CTR/GCM/CCM.',
   AAD: 'Additional Authenticated Data — header/metadata authenticated by the tag but not encrypted. Used to bind ciphertext to a context (e.g. session id).',
@@ -29,6 +37,8 @@ const GLOSSARY: Record<string, string> = {
     'The pseudorandom byte stream produced by AES on successive counter blocks. CTR encryption is simply plaintext XOR keystream.',
 };
 
+let tipSeq = 0;
+
 export function mountGlossary(): void {
   // Find every span with [data-term] and attach tooltip on hover/focus.
   const terms = document.querySelectorAll<HTMLElement>('[data-term]');
@@ -39,14 +49,14 @@ export function mountGlossary(): void {
 
     el.classList.add('glossary-term');
     el.setAttribute('tabindex', '0');
-    el.setAttribute('role', 'button');
-    el.setAttribute('aria-label', `${term}: ${def}`);
 
     const tip = document.createElement('span');
     tip.className = 'glossary-tip';
+    tip.id = `glossary-tip-${++tipSeq}`;
     tip.setAttribute('role', 'tooltip');
     tip.innerHTML = `<strong>${term}</strong> — ${def}`;
     el.appendChild(tip);
+    el.setAttribute('aria-describedby', tip.id);
   });
 }
 

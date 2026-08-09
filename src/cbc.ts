@@ -59,7 +59,6 @@ function renderChainViz(container: HTMLElement, ciphertext: Uint8Array, iv: Uint
   ivEl.className = 'chain-block';
   ivEl.textContent = 'IV';
   ivEl.title = hexEncode(iv);
-  ivEl.setAttribute('aria-label', `IV: ${hexEncode(iv).slice(0, 16)}…`);
   container.appendChild(ivEl);
   const numBlocks = Math.ceil(ciphertext.length / BLOCK_SIZE);
   for (let i = 0; i < numBlocks; i++) {
@@ -72,10 +71,17 @@ function renderChainViz(container: HTMLElement, ciphertext: Uint8Array, iv: Uint
     blockEl.className = 'chain-block';
     const blockHex = hexEncode(ciphertext.slice(i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE));
     blockEl.textContent = `C${i}`;
+    // `title` only: an aria-label on a role-less <div> is prohibited, and this
+    // one sits inside a role="img" container that makes its subtree
+    // presentational, so it never reached anybody. The container carries it.
     blockEl.title = blockHex;
-    blockEl.setAttribute('aria-label', `Ciphertext block ${i}: ${blockHex.slice(0, 16)}…`);
     container.appendChild(blockEl);
   }
+  container.setAttribute(
+    'aria-label',
+    `CBC chain: the IV, then ${numBlocks} ciphertext block${numBlocks === 1 ? '' : 's'}, ` +
+      'each one feeding into the encryption of the next.'
+  );
 }
 
 function escapeHtml(s: string): string {
@@ -152,8 +158,8 @@ export function mountCBCPanel(): void {
       const match = ct2Hex === lastResult.ciphertextHex;
       vulnContent.innerHTML = `
         <p><strong>Same plaintext + same IV + same key:</strong></p>
-        <div class="hex-output" style="margin:0.5rem 0;">${lastResult.ciphertextHex}</div>
-        <div class="hex-output" style="margin:0.5rem 0;">${ct2Hex}</div>
+        <div class="hex-output" style="margin:0.5rem 0;" tabindex="0" role="group" aria-label="First ciphertext, hexadecimal">${lastResult.ciphertextHex}</div>
+        <div class="hex-output" style="margin:0.5rem 0;" tabindex="0" role="group" aria-label="Second ciphertext under the same key and IV, hexadecimal">${ct2Hex}</div>
         <p style="margin-top:0.5rem;font-weight:700;color:${match ? 'var(--danger)' : 'var(--success)'}">
           ${match
             ? '⚠ IDENTICAL ciphertexts! IV reuse leaks that the same message was sent.'
@@ -227,7 +233,7 @@ export function mountCBCPanel(): void {
       vulnContent.innerHTML = `
         <p><strong>Targeted bit-flip puzzle:</strong> change <code>admin=0</code> to <code>admin=1</code> without the key.</p>
         <p style="margin-top:0.5rem;font-size:0.85rem;">Plaintext layout (16-byte blocks):</p>
-        <div class="hex-output" style="margin:0.3rem 0;">
+        <div class="hex-output" style="margin:0.3rem 0;" tabindex="0" role="group" aria-label="Plaintext block layout">
           [<span style="color:var(--text-muted)">userdata=guest--</span>] [<span style="color:var(--accent);font-weight:700">;admin=0;-------</span>]
         </div>
         <p style="font-size:0.85rem;">In CBC, <code>P₁[i] = AES⁻¹(C₁)[i] ⊕ C₀[i]</code>. To flip bit 0 of P₁[7] (the '0'),

@@ -580,19 +580,38 @@ body {
   justify-content: center;
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  /* The fill comes from the block palettes in ecb.ts / compare.ts, chosen per
+     distinct ciphertext block — the stylesheet never names it, so this ink has
+     to clear 4.5:1 against ALL FIFTEEN of them. White cleared none: 4.47:1 at
+     best (#6366f1), 2.15:1 at worst (#f59e0b), and the `text-shadow` that used
+     to sit under it does not count toward WCAG 1.4.3 at all. Black clears every
+     entry, worst case 4.70:1 on #6366f1. Do not brighten a palette entry past
+     that without re-measuring; the ink is fixed and the fill is not. */
+  color: #000;
   position: relative;
 }
 
+/* The '=' is the WCAG 1.4.1 non-colour cue for "this block repeats" — the one
+   mark in the ECB demo that does not depend on seeing that two fills match. It
+   used to be painted in --danger straight onto the block's own palette fill,
+   where it measured 1.45:1 at worst in light (#b91c1c on #6366f1) and 1.00:1 in
+   dark (#f87171 on #0ea5e9 — the same luminance, so literally invisible).
+   Neither oracle can see that: a ::after glyph is not an element, so axe's
+   color-contrast rule and the arithmetic walk both skip it. Giving it its own
+   opaque chip in fixed colours makes it 6.47:1 in BOTH themes, on all fifteen
+   palette entries, and keeps the red. */
 .block-cell[data-duplicate="true"]::after {
   content: '=';
   position: absolute;
   bottom: -2px;
-  right: 2px;
+  right: 0;
+  padding: 0 2px;
+  border-radius: 3px;
+  background-color: #fff;
+  color: #b91c1c;
   font-size: 0.7rem;
   font-weight: 800;
-  color: var(--danger);
+  line-height: 1.2;
 }
 
 .block-legend {

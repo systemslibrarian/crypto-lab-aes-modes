@@ -151,7 +151,7 @@ export function mountGCMPanel(): void {
       } catch {
         tamperContent.innerHTML = `
           <p><strong>Tampered ciphertext (flipped bit 0 of byte 0):</strong></p>
-          <div class="hex-output" style="margin:0.5rem 0;">
+          <div class="hex-output" style="margin:0.5rem 0;" tabindex="0" role="group" aria-label="Tampered ciphertext, hexadecimal">
             <span style="color:var(--danger);font-weight:700">${hexEncode(tampered.slice(0, 1))}</span>${hexEncode(tampered.slice(1))}
           </div>
           <p style="margin-top:0.5rem;font-weight:700;color:var(--success);">

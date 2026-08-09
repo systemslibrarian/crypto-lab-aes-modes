@@ -208,31 +208,31 @@
     <nav class="mode-selector" role="tablist" aria-label="AES mode panels">
       <button role="tab" class="mode-tab" id="tab-ecb" aria-controls="panel-ecb" aria-selected="true" data-mode="ecb">
         <span class="tab-label">ECB</span>
-        <span class="status-chip status-avoid" aria-label="Status: Avoid">AVOID</span>
+        <span class="status-chip status-avoid">AVOID<span class="sr-only"> — never use for multi-block data</span></span>
       </button>
       <button role="tab" class="mode-tab" id="tab-cbc" aria-controls="panel-cbc" aria-selected="false" data-mode="cbc">
         <span class="tab-label">CBC</span>
-        <span class="status-chip status-legacy" aria-label="Status: Legacy">LEGACY</span>
+        <span class="status-chip status-legacy">LEGACY<span class="sr-only"> — use GCM instead</span></span>
       </button>
       <button role="tab" class="mode-tab" id="tab-ctr" aria-controls="panel-ctr" aria-selected="false" data-mode="ctr">
         <span class="tab-label">CTR</span>
-        <span class="status-chip status-acceptable" aria-label="Status: Acceptable">OK</span>
+        <span class="status-chip status-acceptable">OK<span class="sr-only"> — acceptable</span></span>
       </button>
       <button role="tab" class="mode-tab" id="tab-gcm" aria-controls="panel-gcm" aria-selected="false" data-mode="gcm">
         <span class="tab-label">GCM</span>
-        <span class="status-chip status-recommended" aria-label="Status: Recommended">REC</span>
+        <span class="status-chip status-recommended">REC<span class="sr-only">ommended</span></span>
       </button>
       <button role="tab" class="mode-tab" id="tab-ccm" aria-controls="panel-ccm" aria-selected="false" data-mode="ccm">
         <span class="tab-label">CCM</span>
-        <span class="status-chip status-acceptable" aria-label="Status: Acceptable">OK</span>
+        <span class="status-chip status-acceptable">OK<span class="sr-only"> — acceptable</span></span>
       </button>
       <button role="tab" class="mode-tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false" data-mode="compare">
         <span class="tab-label">Compare</span>
-        <span class="status-chip status-compare" aria-label="Side-by-side comparison">vs</span>
+        <span class="status-chip status-compare">vs<span class="sr-only"> — side-by-side comparison</span></span>
       </button>
       <button role="tab" class="mode-tab" id="tab-oracle" aria-controls="panel-oracle" aria-selected="false" data-mode="oracle">
         <span class="tab-label">Oracle</span>
-        <span class="status-chip status-attack" aria-label="Status: Attack Demo">ATK</span>
+        <span class="status-chip status-attack">ATK<span class="sr-only"> — attack demonstration</span></span>
       </button>
     </nav>
 
@@ -240,7 +240,7 @@
     <section role="tabpanel" id="panel-ecb" class="mode-panel" aria-labelledby="tab-ecb">
       <div class="panel-header">
         <h2>ECB: The Dangerous Default</h2>
-        <span class="status-chip status-avoid" aria-label="Status: Avoid — Never use for multi-block data">AVOID</span>
+        <span class="status-chip status-avoid">AVOID<span class="sr-only"> — never use for multi-block data</span></span>
       </div>
       <p class="panel-desc">Electronic Codebook mode encrypts each block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking the structure of the message. As defined in <strong>NIST SP 800-38A</strong>, <span data-term="ECB" class="glossary">ECB</span> should never be used for multi-block data.</p>
 
@@ -267,15 +267,15 @@
       <div class="demo-output" aria-live="polite">
         <div class="output-group">
           <h3>Key <span class="hex-label">(hex)</span></h3>
-          <output id="ecb-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+          <output tabindex="0" id="ecb-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Ciphertext <span class="hex-label">(hex)</span></h3>
-          <output id="ecb-ciphertext" class="hex-output" aria-label="ECB ciphertext in hexadecimal"></output>
+          <output tabindex="0" id="ecb-ciphertext" class="hex-output" aria-label="ECB ciphertext in hexadecimal"></output>
         </div>
-        <div class="block-viz" id="ecb-blocks" aria-label="ECB block visualization — identical colors indicate identical ciphertext blocks">
+        <div class="block-viz" id="ecb-blocks">
           <h3>Block Comparison</h3>
-          <div class="block-grid" id="ecb-block-grid" role="img" aria-label="Visual block comparison"></div>
+          <div class="block-grid" id="ecb-block-grid" role="img" aria-label="ECB ciphertext blocks — identical colours mark identical ciphertext blocks, and a repeated block also carries an equals sign"></div>
           <p class="block-legend"><span class="legend-same" aria-hidden="true">■</span> Same color = identical ciphertext block (structure leaked) <span class="legend-diff" aria-hidden="true">■</span> Different color = different ciphertext block</p>
         </div>
         <div class="math-overlay" id="ecb-math" hidden>
@@ -309,7 +309,7 @@
       </div>
 
       <!-- Threat model -->
-      <div class="threat-grid" aria-label="ECB threat model">
+      <div class="threat-grid" role="group" aria-label="ECB threat model">
         <div class="threat-col threat-can">
           <h4>An attacker who sees the ciphertext CAN</h4>
           <ul>
@@ -356,7 +356,7 @@
     <section role="tabpanel" id="panel-cbc" class="mode-panel" aria-labelledby="tab-cbc" hidden>
       <div class="panel-header">
         <h2>CBC: The Classic Workhorse</h2>
-        <span class="status-chip status-legacy" aria-label="Status: Legacy — Use GCM instead">LEGACY</span>
+        <span class="status-chip status-legacy">LEGACY<span class="sr-only"> — use GCM instead</span></span>
       </div>
       <p class="panel-desc">Cipher Block Chaining mode XORs each plaintext block with the previous ciphertext block before encryption. As defined in <strong>NIST SP 800-38A</strong>, CBC requires a unique, unpredictable <span data-term="IV" class="glossary">IV</span> for each encryption and provides confidentiality but not integrity.</p>
 
@@ -390,15 +390,15 @@
       <div class="demo-output" aria-live="polite">
         <div class="output-group">
           <h3>Key <span class="hex-label">(hex)</span></h3>
-          <output id="cbc-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+          <output tabindex="0" id="cbc-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>IV <span class="hex-label">(hex)</span></h3>
-          <output id="cbc-iv-output" class="hex-output" aria-label="Initialization vector in hexadecimal"></output>
+          <output tabindex="0" id="cbc-iv-output" class="hex-output" aria-label="Initialization vector in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Ciphertext <span class="hex-label">(hex)</span></h3>
-          <output id="cbc-ciphertext" class="hex-output" aria-label="CBC ciphertext in hexadecimal"></output>
+          <output tabindex="0" id="cbc-ciphertext" class="hex-output" aria-label="CBC ciphertext in hexadecimal"></output>
         </div>
         <div class="block-viz" id="cbc-chain-viz">
           <h3>Block Chaining Visualization</h3>
@@ -428,7 +428,7 @@
       </div>
 
       <!-- Threat model -->
-      <div class="threat-grid" aria-label="CBC threat model">
+      <div class="threat-grid" role="group" aria-label="CBC threat model">
         <div class="threat-col threat-can">
           <h4>An attacker who sees the ciphertext CAN</h4>
           <ul>
@@ -480,7 +480,7 @@
     <section role="tabpanel" id="panel-ctr" class="mode-panel" aria-labelledby="tab-ctr" hidden>
       <div class="panel-header">
         <h2>CTR: Stream Mode</h2>
-        <span class="status-chip status-acceptable" aria-label="Status: Acceptable with strict nonce management">ACCEPTABLE</span>
+        <span class="status-chip status-acceptable">ACCEPTABLE<span class="sr-only"> — with strict nonce management</span></span>
       </div>
       <p class="panel-desc">Counter mode turns AES into a stream cipher by encrypting successive <span data-term="Counter" class="glossary">counter</span> values to produce a <span data-term="Keystream" class="glossary">keystream</span>, then XORing with plaintext. As defined in <strong>NIST SP 800-38A</strong>, CTR requires a unique <span data-term="Nonce" class="glossary">nonce</span>/counter combination for every encryption — nonce reuse is catastrophic.</p>
 
@@ -508,15 +508,15 @@
       <div class="demo-output" aria-live="polite">
         <div class="output-group">
           <h3>Key <span class="hex-label">(hex)</span></h3>
-          <output id="ctr-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+          <output tabindex="0" id="ctr-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Counter/Nonce <span class="hex-label">(hex)</span></h3>
-          <output id="ctr-counter" class="hex-output" aria-label="Counter value in hexadecimal"></output>
+          <output tabindex="0" id="ctr-counter" class="hex-output" aria-label="Counter value in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Ciphertext 1 <span class="hex-label">(hex)</span></h3>
-          <output id="ctr-ciphertext" class="hex-output" aria-label="CTR ciphertext 1 in hexadecimal"></output>
+          <output tabindex="0" id="ctr-ciphertext" class="hex-output" aria-label="CTR ciphertext 1 in hexadecimal"></output>
         </div>
         <div class="block-viz" id="ctr-stream-viz">
           <h3>Counter + Keystream Generation</h3>
@@ -545,7 +545,7 @@
       </div>
 
       <!-- Threat model -->
-      <div class="threat-grid" aria-label="CTR threat model">
+      <div class="threat-grid" role="group" aria-label="CTR threat model">
         <div class="threat-col threat-can">
           <h4>An attacker CAN</h4>
           <ul>
@@ -590,7 +590,7 @@
     <section role="tabpanel" id="panel-gcm" class="mode-panel" aria-labelledby="tab-gcm" hidden>
       <div class="panel-header">
         <h2>GCM: Authenticated Encryption</h2>
-        <span class="status-chip status-recommended" aria-label="Status: Recommended default">RECOMMENDED</span>
+        <span class="status-chip status-recommended">RECOMMENDED<span class="sr-only"> default</span></span>
       </div>
       <p class="panel-desc">Galois/Counter Mode combines CTR encryption with <span data-term="GHASH" class="glossary">GHASH</span> authentication. As defined in <strong>NIST SP 800-38D</strong>, GCM provides both confidentiality and authenticity, including authentication of <span data-term="AAD" class="glossary">Additional Authenticated Data (AAD)</span>. The <span data-term="Nonce" class="glossary">nonce</span> must never repeat with the same key.</p>
 
@@ -630,19 +630,19 @@
       <div class="demo-output" aria-live="polite">
         <div class="output-group">
           <h3>Key <span class="hex-label">(hex)</span></h3>
-          <output id="gcm-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+          <output tabindex="0" id="gcm-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Nonce <span class="hex-label">(hex, 12 bytes)</span></h3>
-          <output id="gcm-nonce" class="hex-output" aria-label="GCM nonce in hexadecimal"></output>
+          <output tabindex="0" id="gcm-nonce" class="hex-output" aria-label="GCM nonce in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Ciphertext <span class="hex-label">(hex)</span></h3>
-          <output id="gcm-ciphertext" class="hex-output" aria-label="GCM ciphertext in hexadecimal"></output>
+          <output tabindex="0" id="gcm-ciphertext" class="hex-output" aria-label="GCM ciphertext in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Auth Tag <span class="hex-label">(hex)</span></h3>
-          <output id="gcm-tag" class="hex-output" aria-label="Authentication tag in hexadecimal"></output>
+          <output tabindex="0" id="gcm-tag" class="hex-output" aria-label="Authentication tag in hexadecimal"></output>
         </div>
         <div class="math-overlay" id="gcm-math" hidden>
           <h3>Block-level math</h3>
@@ -668,7 +668,7 @@
       </div>
 
       <!-- Threat model -->
-      <div class="threat-grid" aria-label="GCM threat model">
+      <div class="threat-grid" role="group" aria-label="GCM threat model">
         <div class="threat-col threat-can">
           <h4>An attacker CAN</h4>
           <ul>
@@ -755,7 +755,7 @@
     <section role="tabpanel" id="panel-ccm" class="mode-panel" aria-labelledby="tab-ccm" hidden>
       <div class="panel-header">
         <h2>CCM: Constrained Environments</h2>
-        <span class="status-chip status-acceptable" aria-label="Status: Acceptable for constrained environments">ACCEPTABLE</span>
+        <span class="status-chip status-acceptable">ACCEPTABLE<span class="sr-only"> — for constrained environments</span></span>
       </div>
       <p class="panel-desc">Counter with <span data-term="CBC-MAC" class="glossary">CBC-MAC</span> mode combines CTR encryption with CBC-MAC authentication. Defined in <strong>RFC 3610</strong> and <strong>NIST SP 800-38C</strong>, CCM is a two-pass <span data-term="AEAD" class="glossary">AEAD</span> mode suitable for constrained environments where code size and complexity matter.</p>
 
@@ -783,15 +783,15 @@
       <div class="demo-output" aria-live="polite">
         <div class="output-group">
           <h3>Key <span class="hex-label">(hex)</span></h3>
-          <output id="ccm-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
+          <output tabindex="0" id="ccm-key" class="hex-output" aria-label="AES key in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Nonce <span class="hex-label">(hex)</span></h3>
-          <output id="ccm-nonce" class="hex-output" aria-label="CCM nonce in hexadecimal"></output>
+          <output tabindex="0" id="ccm-nonce" class="hex-output" aria-label="CCM nonce in hexadecimal"></output>
         </div>
         <div class="output-group">
           <h3>Ciphertext + Tag <span class="hex-label">(hex)</span></h3>
-          <output id="ccm-ciphertext" class="hex-output" aria-label="CCM ciphertext with authentication tag in hexadecimal"></output>
+          <output tabindex="0" id="ccm-ciphertext" class="hex-output" aria-label="CCM ciphertext with authentication tag in hexadecimal"></output>
         </div>
         <div class="math-overlay" id="ccm-math" hidden>
           <h3>Block-level math</h3>
@@ -830,7 +830,7 @@
       </div>
 
       <!-- Threat model -->
-      <div class="threat-grid" aria-label="CCM threat model">
+      <div class="threat-grid" role="group" aria-label="CCM threat model">
         <div class="threat-col threat-can">
           <h4>An attacker CAN</h4>
           <ul>
@@ -903,7 +903,7 @@
     <section role="tabpanel" id="panel-oracle" class="mode-panel" aria-labelledby="tab-oracle" hidden>
       <div class="panel-header">
         <h2>Padding Oracle Attack</h2>
-        <span class="status-chip status-attack" aria-label="Attack demonstration">ATTACK DEMO</span>
+        <span class="status-chip status-attack">ATTACK DEMO</span>
       </div>
       <p class="panel-desc">A step-by-step demonstration of a CBC padding oracle attack. The oracle reveals only whether <span data-term="PKCS#7" class="glossary">PKCS#7</span> padding is valid — yet this single bit of information is enough to recover the <em>entire plaintext</em>, one byte at a time.</p>
 
@@ -921,15 +921,14 @@
         </div>
         <div class="btn-row">
           <button id="oracle-setup-btn" class="btn btn-primary" aria-label="Encrypt and set up oracle attack">Encrypt &amp; Setup Oracle</button>
-          <button id="oracle-run-btn" class="btn btn-secondary" aria-label="Run padding oracle attack step by step" disabled>Run Attack</button>
-          <button id="oracle-auto-btn" class="btn btn-secondary" aria-label="Auto-run padding oracle attack" disabled>Auto-Run</button>
+          <button id="oracle-run-btn" class="btn btn-secondary" disabled>Run Attack</button>
         </div>
       </div>
 
       <div class="demo-output" aria-live="polite">
         <div class="output-group">
           <h3>Target Ciphertext <span class="hex-label">(hex)</span></h3>
-          <output id="oracle-ciphertext" class="hex-output" aria-label="Target ciphertext in hexadecimal"></output>
+          <output tabindex="0" id="oracle-ciphertext" class="hex-output" aria-label="Target ciphertext in hexadecimal"></output>
         </div>
         <div class="oracle-viz" id="oracle-progress" hidden>
           <h3>Attack Progress</h3>
@@ -942,7 +941,7 @@
           </div>
           <div class="oracle-recovered">
             <h4>Recovered Plaintext</h4>
-            <output id="oracle-recovered-text" class="hex-output recovered-text" aria-label="Recovered plaintext"></output>
+            <output tabindex="0" id="oracle-recovered-text" class="hex-output recovered-text" aria-label="Recovered plaintext"></output>
           </div>
           <div class="oracle-math" id="oracle-math" hidden>
             <h4>Latest XOR derivation</h4>
@@ -950,13 +949,13 @@
           </div>
           <div class="oracle-log">
             <h4>Oracle Query Log</h4>
-            <div id="oracle-log" class="log-scroll" role="log" aria-label="Padding oracle query log" aria-live="off"></div>
+            <div id="oracle-log" tabindex="0" class="log-scroll" role="log" aria-label="Padding oracle query log" aria-live="off"></div>
           </div>
         </div>
       </div>
 
       <!-- Threat model -->
-      <div class="threat-grid" aria-label="Padding oracle threat model">
+      <div class="threat-grid" role="group" aria-label="Padding oracle threat model">
         <div class="threat-col threat-can">
           <h4>An attacker who has oracle access CAN</h4>
           <ul>

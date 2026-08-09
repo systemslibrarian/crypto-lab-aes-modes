@@ -40,6 +40,14 @@ function renderGrid(container: HTMLElement, ct: Uint8Array): { dupCount: number 
     if (duplicates.has(hex)) cell.setAttribute('data-duplicate', 'true');
     container.appendChild(cell);
   });
+  container.setAttribute('role', 'img');
+  container.setAttribute(
+    'aria-label',
+    duplicates.size === 0
+      ? `${blocks.length} ciphertext blocks, all different.`
+      : `${blocks.length} ciphertext blocks, with ${duplicates.size} group` +
+        `${duplicates.size === 1 ? '' : 's'} of repeats — structure leaked.`
+  );
   return { dupCount: duplicates.size };
 }
 
@@ -69,7 +77,7 @@ function appendCard(container: HTMLElement, card: ModeCard): void {
     <p class="compare-card-note">${card.note}</p>
     <details>
       <summary>ciphertext hex</summary>
-      <code class="hex-output">${hexEncode(card.ciphertext)}</code>
+      <div class="hex-output" tabindex="0" role="group" aria-label="${card.name} ciphertext, hexadecimal">${hexEncode(card.ciphertext)}</div>
     </details>
   `;
   container.appendChild(wrapper);

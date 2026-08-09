@@ -184,11 +184,11 @@ export function mountCTRPanel(): void {
         <p style="font-size:0.82rem;margin-top:0.4rem;"><strong>C₁ ⊕ C₂ = P₁ ⊕ P₂</strong> (keystream cancels!)</p>
         <div style="margin:0.5rem 0;">
           <p style="font-size:0.78rem;color:var(--text-muted);">C₁ ⊕ C₂ (hex):</p>
-          <div class="hex-output">${hexEncode(xored)}</div>
+          <div class="hex-output" tabindex="0" role="group" aria-label="C1 XOR C2, hexadecimal">${hexEncode(xored)}</div>
         </div>
         <p style="margin-top:0.5rem;"><strong>If attacker knows P₁, they recover P₂:</strong></p>
         <p style="font-size:0.82rem;">(P₁ ⊕ P₂) ⊕ P₁ = P₂</p>
-        <div class="hex-output" style="margin-top:0.3rem;font-weight:700;color:var(--danger);">
+        <div class="hex-output" style="margin-top:0.3rem;font-weight:700;color:var(--danger);" tabindex="0" role="group" aria-label="Recovered second plaintext">
           ${escapeHtml(recoveredText)}
         </div>
         <p style="margin-top:0.5rem;font-weight:700;color:var(--danger);">

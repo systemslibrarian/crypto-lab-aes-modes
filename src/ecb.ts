@@ -264,8 +264,11 @@ function renderBlockGrid(
     cell.className = 'block-cell';
     cell.style.backgroundColor = colorMap.get(hex)!;
     cell.textContent = `B${i}`;
+    // `title` only — an aria-label here is prohibited on a role-less <div> and
+    // would be discarded regardless, because `container` is role="img" and
+    // makes its whole subtree presentational. The information belongs on the
+    // container, and is set below.
     cell.title = hex.slice(0, 8) + '…';
-    cell.setAttribute('aria-label', `Block ${i}: ${hex.slice(0, 16)}…`);
     const isDup = duplicates.has(hex);
     if (isDup) {
       cell.setAttribute('data-duplicate', 'true');
@@ -273,4 +276,19 @@ function renderBlockGrid(
     }
     container.appendChild(cell);
   });
+
+  // The grid is the accessible object, so its name has to carry the finding —
+  // not a fixed "Visual block comparison" that says the same thing whether ECB
+  // leaked the structure of the message or not.
+  const repeated = [...duplicates.values()];
+  const total = repeated.reduce((n, idx) => n + idx.length, 0);
+  container.setAttribute(
+    'aria-label',
+    repeated.length === 0
+      ? `${blocks.length} ciphertext blocks, all different.`
+      : `${blocks.length} ciphertext blocks. ${total} of them repeat, in ` +
+        `${repeated.length} group${repeated.length === 1 ? '' : 's'}: ` +
+        repeated.map((idx) => `blocks ${idx.join(' and ')}`).join('; ') +
+        '. That repetition is the structure ECB leaks.'
+  );
 }

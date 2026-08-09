@@ -196,7 +196,6 @@ export function mountOraclePanel(): void {
   const plaintextEl = document.getElementById('oracle-plaintext') as HTMLTextAreaElement;
   const setupBtn = document.getElementById('oracle-setup-btn') as HTMLButtonElement;
   const runBtn = document.getElementById('oracle-run-btn') as HTMLButtonElement;
-  const autoBtn = document.getElementById('oracle-auto-btn') as HTMLButtonElement;
   const ctOut = document.getElementById('oracle-ciphertext') as HTMLElement;
   const progressDiv = document.getElementById('oracle-progress') as HTMLElement;
   const blockNumOut = document.getElementById('oracle-block-num') as HTMLElement;
@@ -232,10 +231,13 @@ export function mountOraclePanel(): void {
         const cell = document.createElement('div');
         cell.className = 'oracle-byte';
         cell.textContent = '??';
-        cell.setAttribute('aria-label', `Byte ${i}: unknown`);
+        // No per-cell aria-label: prohibited on a role-less <div>, and
+        // discarded anyway inside the role="img" grid. The grid's own name
+        // carries the progress, updated as bytes fall.
         cell.id = `oracle-byte-${i}`;
         byteGrid.appendChild(cell);
       }
+      byteGrid.setAttribute('aria-label', `0 of ${numBytes} plaintext bytes recovered.`);
 
       progressDiv.hidden = false;
       blockNumOut.textContent = '-';
@@ -245,7 +247,6 @@ export function mountOraclePanel(): void {
       logEl.innerHTML = '';
 
       runBtn.disabled = false;
-      autoBtn.disabled = false;
     } catch (err) {
       announceError(`Oracle setup failed: ${(err as Error).message}`);
     }
@@ -257,10 +258,7 @@ export function mountOraclePanel(): void {
       byteNumOut.textContent = byteIdx.toString();
       const globalIdx = blockIdx * BLOCK_SIZE + byteIdx;
       const cell = document.getElementById(`oracle-byte-${globalIdx}`);
-      if (cell) {
-        cell.className = 'oracle-byte active';
-        cell.setAttribute('aria-label', `Byte ${globalIdx}: being attacked`);
-      }
+      if (cell) cell.className = 'oracle-byte active';
     },
     onQuery(queryNum, guess, valid) {
       queryCountOut.textContent = queryNum.toString();
@@ -279,8 +277,12 @@ export function mountOraclePanel(): void {
       if (cell) {
         cell.className = 'oracle-byte recovered';
         cell.textContent = value.toString(16).padStart(2, '0');
-        cell.setAttribute('aria-label', `Byte ${globalIdx}: recovered as 0x${value.toString(16).padStart(2, '0')} (${char})`);
       }
+      const done = byteGrid.querySelectorAll('.oracle-byte.recovered').length;
+      byteGrid.setAttribute(
+        'aria-label',
+        `${done} of ${byteGrid.children.length} plaintext bytes recovered.`
+      );
       const hex2 = (n: number) => n.toString(16).padStart(2, '0');
       mathBox.hidden = false;
       mathContent.innerHTML =
@@ -303,7 +305,6 @@ export function mountOraclePanel(): void {
       recoveredOut.textContent = text;
       isRunning = false;
       runBtn.disabled = false;
-      autoBtn.disabled = false;
       setupBtn.disabled = false;
     },
   };
@@ -312,7 +313,6 @@ export function mountOraclePanel(): void {
     if (!attackKey || !attackIV || !attackCT || isRunning) return;
     isRunning = true;
     runBtn.disabled = true;
-    autoBtn.disabled = true;
     setupBtn.disabled = true;
 
     try {
@@ -320,12 +320,10 @@ export function mountOraclePanel(): void {
     } catch (err) {
       isRunning = false;
       runBtn.disabled = false;
-      autoBtn.disabled = false;
       setupBtn.disabled = false;
       announceError(`Oracle attack failed: ${(err as Error).message}`);
     }
   }
 
   runBtn.addEventListener('click', executeAttack);
-  autoBtn.addEventListener('click', executeAttack);
 }
