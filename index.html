@@ -729,13 +729,13 @@
       <!-- Self check -->
       <div class="quiz-card"
            data-correct="c"
-           data-why-correct="GCM's nonce must be unique per key. Reuse leaks the GHASH subkey H, which lets the attacker forge any ciphertext under that key — confidentiality and authenticity both collapse."
+           data-why-correct="GCM's nonce must be unique per key. Reuse leaks the GHASH subkey H, which lets the attacker forge further messages under that nonce — the keystream repeats as well, so confidentiality and authenticity both collapse for it. H alone does not forge under a fresh nonce: the tag also carries a mask E_K(J0) that changes with the nonce."
            data-why-wrong="GCM nonce reuse is uniquely catastrophic: it breaks BOTH confidentiality AND authenticity for that key. Not 'just like CTR' — worse, because the attacker also recovers the authentication key.">
         <h4>Self-check</h4>
         <p>You reuse a GCM nonce with the same key. What's the worst consequence?</p>
         <label><input type="radio" name="q-gcm" value="a"> A slight performance hit during decryption.</label>
         <label><input type="radio" name="q-gcm" value="b"> Same as CTR nonce reuse — XOR of plaintexts.</label>
-        <label><input type="radio" name="q-gcm" value="c"> Attacker recovers the GHASH subkey H and can forge any future message under that key.</label>
+        <label><input type="radio" name="q-gcm" value="c"> Attacker recovers the GHASH subkey H and can forge further messages under that nonce.</label>
         <label><input type="radio" name="q-gcm" value="d"> The AAD silently changes.</label>
         <button type="button" class="btn btn-secondary quiz-check">Check</button>
         <div class="quiz-explain" hidden></div>

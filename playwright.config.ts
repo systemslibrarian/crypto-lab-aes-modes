@@ -19,6 +19,17 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    /* The label regressions below are engine-independent, but "engine-independent"
+       is a claim, and this lab publishes a browser-support table that instructors
+       read. Running them in all three is how that table stays earned. */
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
   ],
   webServer: {
     // Build first: `vite preview` only serves whatever is already in `dist/`.

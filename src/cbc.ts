@@ -239,7 +239,7 @@ export function mountCBCPanel(): void {
         <p style="font-size:0.85rem;">In CBC, <code>P₁[i] = AES⁻¹(C₁)[i] ⊕ C₀[i]</code>. To flip bit 0 of P₁[7] (the '0'),
           we flip bit 0 of <strong>C₀[7]</strong>. Block 0 of plaintext is garbled, but block 1 changes <em>exactly</em> as we wanted.</p>
         <p style="margin-top:0.5rem;">Original decrypt: <code>${escapeHtml(origPlain)}</code></p>
-        <p>After flipping bit 0 of C₀[1]: <code class="${ok ? 'decrypt-bad-targeted' : ''}">${escapeHtml(result)}</code></p>
+        <p>After flipping bit 0 of C₀[7]: <code class="${ok ? 'decrypt-bad-targeted' : ''}">${escapeHtml(result)}</code></p>
         <p style="margin-top:0.5rem;font-weight:700;color:${ok ? 'var(--danger)' : 'var(--warning)'}">
           ${ok ? '⚠ admin=1 — privilege escalation via CBC bit-flip, no key needed.' : '⚠ Block 0 garbled; padding may have collapsed.'}
         </p>
