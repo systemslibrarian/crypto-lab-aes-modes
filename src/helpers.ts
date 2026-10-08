@@ -39,6 +39,20 @@ const GLOSSARY: Record<string, string> = {
 
 let tipSeq = 0;
 
+function positionGlossaryTip(el: HTMLElement, tip: HTMLElement): void {
+  const box = tip.getBoundingClientRect();
+  if (!box.width || !box.height) return;
+  const anchor = el.getBoundingClientRect();
+  const gap = 8;
+  // Fixed positioning keeps definitions inside the viewport even when a term
+  // is at the end of a line. Clipping overflow would hide the definition.
+  const left = Math.max(gap, Math.min(anchor.left, window.innerWidth - box.width - gap));
+  const preferredTop = anchor.top - box.height - gap;
+  const top = preferredTop >= gap ? preferredTop : anchor.bottom + gap;
+  tip.style.left = `${left}px`;
+  tip.style.top = `${Math.max(gap, Math.min(top, window.innerHeight - box.height - gap))}px`;
+}
+
 export function mountGlossary(): void {
   // Find every span with [data-term] and attach tooltip on hover/focus.
   const terms = document.querySelectorAll<HTMLElement>('[data-term]');
@@ -57,7 +71,17 @@ export function mountGlossary(): void {
     tip.innerHTML = `<strong>${term}</strong> — ${def}`;
     el.appendChild(tip);
     el.setAttribute('aria-describedby', tip.id);
+    el.addEventListener('mouseenter', () => positionGlossaryTip(el, tip));
+    el.addEventListener('focus', () => positionGlossaryTip(el, tip));
   });
+  const reposition = () => {
+    terms.forEach((el) => {
+      const tip = el.querySelector<HTMLElement>('.glossary-tip');
+      if (tip && el.matches(':hover, :focus-within')) positionGlossaryTip(el, tip);
+    });
+  };
+  window.addEventListener('resize', reposition);
+  window.addEventListener('scroll', reposition, { passive: true, capture: true });
 }
 
 // ─── Predict-before-reveal prompts ──────────────────────────────

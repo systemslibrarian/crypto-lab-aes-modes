@@ -47,6 +47,11 @@ npm test        # vitest unit + known-answer tests (crypto)
 npm run test:a11y  # Playwright functional-exhibit + WCAG A/AA gate
 ```
 
+The padding oracle is tested with short, full-block, and multi-block messages in
+Chromium, Firefox, and WebKit. It rejects a decrypt response that removes zero
+padding bytes (observed in WebKit for a trailing `0x00`) and stops with an error
+if no byte can be recovered, rather than displaying fabricated plaintext.
+
 ## How to Run Locally
 
 ```bash
