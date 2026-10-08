@@ -19,10 +19,14 @@ const BLOCK_SIZE = 16;
  * PKCS#7 padding oracle: returns true if padding is valid, false otherwise.
  * Uses WebCrypto AES-CBC decrypt — if padding is invalid, decrypt throws.
  */
-async function paddingOracle(key: CryptoKey, iv: Uint8Array, ciphertext: Uint8Array): Promise<boolean> {
+export async function paddingOracle(key: CryptoKey, iv: Uint8Array, ciphertext: Uint8Array): Promise<boolean> {
   try {
-    await aesDecrypt({ name: 'AES-CBC', iv }, key, ciphertext);
-    return true;
+    const decrypted = await aesDecrypt({ name: 'AES-CBC', iv }, key, ciphertext);
+    // WebKit can accept a trailing 0x00 and return the whole block, although
+    // PKCS#7 requires 1..16 padding bytes. A successful decrypt alone is not
+    // enough: WebCrypto must actually have removed a valid padding length.
+    const removed = ciphertext.byteLength - decrypted.byteLength;
+    return removed >= 1 && removed <= BLOCK_SIZE;
   } catch {
     return false;
   }
@@ -31,7 +35,7 @@ async function paddingOracle(key: CryptoKey, iv: Uint8Array, ciphertext: Uint8Ar
 /**
  * Encrypt plaintext with AES-256-CBC and return key, IV, and ciphertext.
  */
-async function setupTarget(plaintext: Uint8Array): Promise<{
+export async function setupTarget(plaintext: Uint8Array): Promise<{
   key: CryptoKey;
   iv: Uint8Array;
   ciphertext: Uint8Array;
@@ -146,9 +150,7 @@ async function attackBlock(
     }
 
     if (!found) {
-      // Should not happen in a correct implementation
-      intermediate[bytePos] = 0;
-      plaintext[bytePos] = prevBlock[bytePos];
+      throw new Error(`No valid padding response for block ${blockIdx}, byte ${bytePos}`);
     }
   }
 
@@ -159,7 +161,7 @@ async function attackBlock(
 /**
  * Run the full padding oracle attack across all blocks.
  */
-async function runAttack(
+export async function runAttack(
   key: CryptoKey,
   iv: Uint8Array,
   ciphertext: Uint8Array,
@@ -183,9 +185,11 @@ async function runAttack(
 
   // Strip PKCS#7 padding from result
   const lastByte = fullPlaintext[fullPlaintext.length - 1];
-  const unpaddedLen = (lastByte > 0 && lastByte <= BLOCK_SIZE)
-    ? fullPlaintext.length - lastByte
-    : fullPlaintext.length;
+  if (!(lastByte >= 1 && lastByte <= BLOCK_SIZE) ||
+      !fullPlaintext.slice(-lastByte).every((byte) => byte === lastByte)) {
+    throw new Error('Recovered plaintext has invalid PKCS#7 padding');
+  }
+  const unpaddedLen = fullPlaintext.length - lastByte;
   const result = fullPlaintext.slice(0, unpaddedLen);
 
   callbacks.onComplete(result);

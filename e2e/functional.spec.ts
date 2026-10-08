@@ -15,26 +15,29 @@ async function openTab(page: import('@playwright/test').Page, id: string): Promi
   await expect(page.locator(`#panel-${id}`)).toBeVisible();
 }
 
-test('padding oracle recovers the actual plaintext byte-by-byte', async ({ page }) => {
-  await page.goto('.');
-  await openTab(page, 'oracle');
+for (const secret of ['Attack me!', 'ABCDEFGHIJKLMNOP', 'CBC across two blocks! 👻']) {
+  test(`padding oracle recovers the actual plaintext byte-by-byte: ${secret}`, async ({ page }) => {
+    await page.goto('.');
+    await openTab(page, 'oracle');
 
-  const secret = 'Attack me!';
-  await page.locator('#oracle-plaintext').fill(secret);
-  await page.locator('#oracle-setup-btn').click();
+    await page.locator('#oracle-plaintext').fill(secret);
+    await page.locator('#oracle-setup-btn').click();
 
-  // Ciphertext must be produced and be a multiple of a block (32 hex chars).
-  const ctHex = (await page.locator('#oracle-ciphertext').textContent())?.trim() ?? '';
-  expect(ctHex.length).toBeGreaterThanOrEqual(32);
-  expect(ctHex.length % 32).toBe(0);
+    // Ciphertext must be produced and be a multiple of a block (32 hex chars).
+    const ctHex = (await page.locator('#oracle-ciphertext').textContent())?.trim() ?? '';
+    expect(ctHex.length).toBeGreaterThanOrEqual(32);
+    expect(ctHex.length % 32).toBe(0);
 
-  await page.locator('#oracle-run-btn').click();
+    await page.locator('#oracle-run-btn').click();
 
-  // The attack is real and iterative; give it room, then assert the recovered
-  // text contains the secret we never handed the oracle in plaintext form.
-  const recovered = page.locator('#oracle-recovered-text');
-  await expect(recovered).toContainText(secret, { timeout: 60_000 });
-});
+    // The attack is real and iterative; give it room, then assert the recovered
+    // text contains the secret we never handed the oracle in plaintext form.
+    const recovered = page.locator('#oracle-recovered-text');
+    await expect(recovered).toHaveText(secret, { timeout: 60_000 });
+    await expect(page.locator('.oracle-byte.recovered')).toHaveCount(ctHex.length / 2);
+    await expect(page.locator('#error-region')).toBeEmpty();
+  });
+}
 
 test('GCM rejects a tampered ciphertext', async ({ page }) => {
   await page.goto('.');
