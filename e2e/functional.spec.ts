@@ -15,6 +15,28 @@ async function openTab(page: import('@playwright/test').Page, id: string): Promi
   await expect(page.locator(`#panel-${id}`)).toBeVisible();
 }
 
+test('CCM rejects oversized UTF-8 input without retaining a prior encrypted record', async ({ page }) => {
+  await page.goto('.');
+  await openTab(page, 'ccm');
+  await page.locator('#ccm-plaintext').fill('valid short control');
+  await page.locator('#ccm-encrypt-btn').click();
+  await expect(page.locator('#ccm-ciphertext')).not.toBeEmpty();
+  for (const text of ['x'.repeat(65_536), '\u00e9'.repeat(32_768)]) {
+    await page.locator('#ccm-plaintext').fill(text);
+    await page.locator('#ccm-encrypt-btn').click();
+    await expect(page.locator('#error-region')).toContainText('65535 bytes');
+    await expect(page.locator('#ccm-ciphertext')).toBeEmpty();
+    await expect(page.locator('#ccm-tamper-btn')).toBeDisabled();
+    await expect(page.locator('#ccm-decrypt-section')).toBeHidden();
+  }
+  await page.locator('#ccm-plaintext').fill('valid control again');
+  await page.locator('#ccm-encrypt-btn').click();
+  await expect(page.locator('#error-region')).toBeEmpty();
+  await expect(page.locator('#ccm-ciphertext')).not.toBeEmpty();
+  await page.locator('#ccm-decrypt-correct-btn').click();
+  await expect(page.locator('#ccm-decrypt-output')).toContainText('valid control again');
+});
+
 for (const secret of ['Attack me!', 'ABCDEFGHIJKLMNOP', 'CBC across two blocks! 👻']) {
   test(`padding oracle recovers the actual plaintext byte-by-byte: ${secret}`, async ({ page }) => {
     await page.goto('.');

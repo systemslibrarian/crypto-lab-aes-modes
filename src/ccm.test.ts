@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * ccm.test.ts — Known-answer + property tests for the hand-rolled AES-CCM.
  *
@@ -8,6 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { createCipheriv } from 'node:crypto';
 import {
   ccmEncrypt,
   ccmDecrypt,
@@ -24,6 +26,58 @@ const he = (b: Uint8Array): string =>
   Array.from(b)
     .map((x) => x.toString(16).padStart(2, '0'))
     .join('');
+
+describe('CCM standard message boundaries and independent interoperability', () => {
+  const key = new Uint8Array(16);
+  const nonce = new Uint8Array(13);
+  const aad = new Uint8Array(0);
+
+  it('matches Node/OpenSSL at the maximum 65,535-byte message for L=2', () => {
+    const plaintext = new Uint8Array(65_535).fill(0x5a);
+    const cipher = createCipheriv('aes-128-ccm', key, nonce, { authTagLength: 16 });
+    cipher.setAAD(aad, { plaintextLength: plaintext.length });
+    const independent = Buffer.concat([cipher.update(plaintext), cipher.final(), cipher.getAuthTag()]);
+    const combined = ccmEncrypt(key, nonce, plaintext, aad, 16);
+    expect(he(combined)).toBe(independent.toString('hex'));
+    expect(ccmDecrypt(key, nonce, combined, aad, 16)).toEqual(plaintext);
+    expect(he(formatB0(nonce, plaintext.length, 0, 16).slice(14))).toBe('ffff');
+  });
+
+  it('rejects 65,536-byte plaintext and ciphertext before the B0 length can wrap', () => {
+    expect(() => formatB0(nonce, 65_536, 0, 16)).toThrow(/65.?535 bytes/);
+    expect(() => ccmEncrypt(key, nonce, new Uint8Array(65_536), aad)).toThrow(/message length/);
+    expect(() => ccmDecrypt(key, nonce, new Uint8Array(65_536 + 16), aad)).toThrow(/message length/);
+  });
+
+  it('uses UTF-8 byte length, rather than character count', () => {
+    const text = '\u00e9'.repeat(32_768);
+    expect(text.length).toBe(32_768);
+    const bytes = new TextEncoder().encode(text);
+    expect(bytes.length).toBe(65_536);
+    expect(() => ccmEncrypt(key, nonce, bytes, aad)).toThrow(/message length/);
+  });
+
+  it('encodes wider valid lengths and counters without 32-bit truncation', () => {
+    const widerNonce = new Uint8Array(7);
+    expect(he(formatB0(widerNonce, 2 ** 32 + 1, 0, 16).slice(8))).toBe('0000000100000001');
+    expect(he(formatCtrBlock(widerNonce, 2 ** 32 + 1).slice(8))).toBe('0000000100000001');
+  });
+
+  it.each([0, 6, 14, 16])('rejects unsupported %i-byte nonces', (length) => {
+    expect(() => ccmEncrypt(key, new Uint8Array(length), new Uint8Array(1), aad)).toThrow(/nonce/);
+    expect(() => ccmDecrypt(key, new Uint8Array(length), new Uint8Array(17), aad)).toThrow(/nonce/);
+  });
+
+  it.each([0, 2, 5, 15, 18])('rejects unsupported %i-byte tags', (length) => {
+    expect(() => ccmEncrypt(key, nonce, new Uint8Array(1), aad, length)).toThrow(/tag length/);
+    expect(() => ccmDecrypt(key, nonce, new Uint8Array(32), aad, length)).toThrow(/tag length/);
+  });
+
+  it.each([-1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])('rejects unreadable/unrepresentable length %s', (length) => {
+    expect(() => formatB0(new Uint8Array(7), length, 0, 16)).toThrow(/message length/);
+    expect(() => formatCtrBlock(new Uint8Array(7), length)).toThrow(/message length/);
+  });
+});
 
 /**
  * RFC 3610 §8 packet vectors. All use AES-128 key C0..CF and an 8-octet tag

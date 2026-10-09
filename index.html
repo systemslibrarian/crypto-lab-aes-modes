@@ -753,7 +753,8 @@
       <div class="demo-controls">
         <div class="input-group">
           <label for="ccm-plaintext">Plaintext</label>
-          <textarea id="ccm-plaintext" rows="3" placeholder="Enter plaintext…"></textarea>
+          <textarea id="ccm-plaintext" rows="3" placeholder="Enter plaintext…" aria-describedby="ccm-length-note"></textarea>
+          <p id="ccm-length-note">This demo uses a 13-byte nonce: plaintext must be at most 65,535 UTF-8 bytes (RFC 3610). Some characters use several bytes.</p>
         </div>
         <div class="input-group">
           <label for="ccm-aad">Additional Authenticated Data (AAD)</label>
