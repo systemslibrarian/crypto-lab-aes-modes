@@ -3,8 +3,8 @@
  * Built from @noble/ciphers single-block AES (ECB disablePadding).
  *
  * Correctness is pinned by unit tests: src/ccm.test.ts checks this
- * implementation against the four RFC 3610 known-answer vectors and against
- * @noble/ciphers' independent CCM. The AAD length prefix follows the full
+ * implementation against four RFC 3610 known-answer vectors and independent
+ * Node/OpenSSL CCM boundary controls. The AAD length prefix follows the full
  * RFC 3610 §2.2 encoding (2-byte, 6-byte 0xFFFE, and 10-byte 0xFFFF forms),
  * not only the <2^16 case.
  */
@@ -14,6 +14,20 @@ import { hexEncode, textToBytes, bytesToText, announceError } from './ui';
 import { ccmMath, renderMath } from './helpers';
 
 const BLOCK = 16;
+
+function nonceWidth(nonce: Uint8Array): number {
+  if (nonce.length < 7 || nonce.length > 13) {
+    throw new RangeError('CCM requires a 7–13-byte nonce (RFC 3610)');
+  }
+  return 15 - nonce.length;
+}
+
+function requireLength(length: number, q: number): void {
+  if (!Number.isSafeInteger(length) || length < 0 || BigInt(length) >= (1n << BigInt(8 * q))) {
+    const maximum = (1n << BigInt(8 * q)) - 1n;
+    throw new RangeError(`CCM message length must be a nonnegative safe integer of at most ${maximum} bytes for this nonce (RFC 3610)`);
+  }
+}
 
 export function aesBlock(key: Uint8Array, block: Uint8Array): Uint8Array {
   const cipher = ecb(key, { disablePadding: true });
@@ -39,15 +53,20 @@ export function formatB0(
   aadLen: number,
   tagLen: number
 ): Uint8Array {
-  const q = 15 - nonce.length;
+  const q = nonceWidth(nonce);
+  requireLength(plaintextLen, q);
+  if (![4, 6, 8, 10, 12, 14, 16].includes(tagLen)) {
+    throw new RangeError('CCM tag length must be 4, 6, 8, 10, 12, 14 or 16 bytes');
+  }
+  if (!Number.isSafeInteger(aadLen) || aadLen < 0) throw new RangeError('Invalid CCM AAD length');
   const flags = (aadLen > 0 ? 0x40 : 0) | (((tagLen - 2) / 2) << 3) | (q - 1);
   const b0 = new Uint8Array(BLOCK);
   b0[0] = flags;
   b0.set(nonce, 1);
   let len = plaintextLen;
   for (let i = BLOCK - 1; i >= BLOCK - q; i--) {
-    b0[i] = len & 0xff;
-    len >>>= 8;
+    b0[i] = len % 256;
+    len = Math.floor(len / 256);
   }
   return b0;
 }
@@ -62,6 +81,7 @@ export function formatB0(
  * is expressed for completeness but AAD that large is not representable here.)
  */
 export function encodeAADLength(aadLen: number): Uint8Array {
+  if (!Number.isSafeInteger(aadLen) || aadLen < 0) throw new RangeError('Invalid CCM AAD length');
   if (aadLen < 0xff00) {
     return Uint8Array.of((aadLen >>> 8) & 0xff, aadLen & 0xff);
   }
@@ -99,14 +119,15 @@ export function formatAAD(aad: Uint8Array): Uint8Array {
 }
 
 export function formatCtrBlock(nonce: Uint8Array, counter: number): Uint8Array {
-  const q = 15 - nonce.length;
+  const q = nonceWidth(nonce);
+  requireLength(counter, q);
   const a = new Uint8Array(BLOCK);
   a[0] = q - 1;
   a.set(nonce, 1);
   let c = counter;
   for (let i = BLOCK - 1; i >= BLOCK - q; i--) {
-    a[i] = c & 0xff;
-    c >>>= 8;
+    a[i] = c % 256;
+    c = Math.floor(c / 256);
   }
   return a;
 }
@@ -176,6 +197,9 @@ export function ccmDecrypt(
   tagLen: number = 16
 ): Uint8Array {
   if (combined.length < tagLen) throw new Error('CCM input too short');
+  // Validate before decrypting or allocating a plaintext. Self-roundtrips do
+  // not establish interoperability when a B0 length overflows its L-byte field.
+  formatB0(nonce, combined.length - tagLen, aad.length, tagLen);
   const ciphertext = combined.slice(0, combined.length - tagLen);
   const encTag = combined.slice(combined.length - tagLen);
   const S0 = aesBlock(key, formatCtrBlock(nonce, 0));
@@ -217,6 +241,12 @@ export function mountCCMPanel(): void {
   let currentCombined: Uint8Array | null = null;
 
   encryptBtn.addEventListener('click', () => {
+    currentKey = currentNonce = currentAAD = currentPlaintext = currentCombined = null;
+    keyOut.textContent = nonceOut.textContent = ctOut.textContent = '';
+    mathBox.hidden = tamperOutput.hidden = decryptSection.hidden = decryptOutput.hidden = true;
+    tamperBtn.disabled = true;
+    const errorRegion = document.getElementById('error-region');
+    if (errorRegion) errorRegion.textContent = '';
     try {
       const key = crypto.getRandomValues(new Uint8Array(16));
       const nonce = crypto.getRandomValues(new Uint8Array(13));

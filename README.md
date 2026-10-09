@@ -39,7 +39,7 @@ The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, th
 
 Most modes here delegate to the platform's audited `WebCrypto` (AES-CBC, AES-CTR, AES-GCM). The two hand-rolled pieces — the `CCM` construction (`formatB0` / CBC-MAC / CTR in `src/ccm.ts`) and the `ECB` block loop — are the custom crypto, so they are pinned by unit tests:
 
-- **CCM** is checked against four of the `AES-128` known-answer vectors from **RFC 3610 §8** (Packet Vectors #1–#4, encrypt *and* decrypt), plus forgery-rejection tests (flipped ciphertext bit, flipped tag bit, modified `AAD`, wrong nonce) and round-trips across several lengths and tag sizes. The `AAD` length prefix now implements the full RFC 3610 §2.2 encoding (the 2-byte, `0xFFFE`+4-byte, and `0xFFFF`+8-byte forms), not just the `<2^16` case.
+- **CCM** is checked against four of the `AES-128` known-answer vectors from **RFC 3610 §8** (Packet Vectors #1–#4, encrypt *and* decrypt), plus an independent Node/OpenSSL control at the 65,535-byte boundary and rejection of oversized plaintext/ciphertext, invalid nonce/tag sizes, and UTF-8 byte-length overflow. Also includes forgery-rejection tests (flipped ciphertext bit, flipped tag bit, modified `AAD`, wrong nonce) and round-trips across several lengths and tag sizes. The `AAD` length prefix now implements the full RFC 3610 §2.2 encoding (the 2-byte, `0xFFFE`+4-byte, and `0xFFFF`+8-byte forms), not just the `<2^16` case.
 - **ECB** pins the raw AES block permutation to the **FIPS 197 (2001) Appendix C.1** AES-128 vector and the four **NIST SP 800-38A Appendix F.1.1** ECB-AES128 vectors, and tests that the duplicate-block detector (the ECB pattern-leak exhibit) actually flags — and never fabricates — repeated blocks.
 
 ```bash
@@ -74,3 +74,17 @@ npm run dev
 *Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
+
+
+## CCM input limits and publishing
+
+The CCM panel uses a 13-byte nonce. RFC 3610 therefore permits at most
+65,535 plaintext bytes, measured after UTF-8 encoding. Oversized inputs produce
+an explanatory error and clear any earlier record; they cannot wrap the length
+field or leave a previous ciphertext available as the new result. The same
+bound applies when decrypting ciphertext, excluding its authentication tag.
+
+`npm run deploy` requests the existing `pages.yml` workflow at `main`, retaining
+unit tests, the production build, and all three browser engines before publishing.
+A successful request is not a successful deployment; check the run and the public
+application separately. Rejected requests keep their failing exit status.
