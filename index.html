@@ -671,7 +671,7 @@
         <div class="threat-col threat-cannot">
           <h4>An attacker CANNOT</h4>
           <ul>
-            <li>Modify ciphertext, AAD, or nonce without detection</li>
+            <li>Reliably modify ciphertext, AAD, or nonce without detection when GCM is used correctly</li>
             <li>Decrypt without the key</li>
             <li>Mount a padding oracle attack (no padding, no oracle)</li>
           </ul>
@@ -680,8 +680,8 @@
 
       <div class="explainer">
         <h3>Why GCM Is the Recommended Default</h3>
-        <p>GCM provides authenticated encryption — any modification to the ciphertext, AAD, nonce, or tag causes decryption to fail. This prevents bit-flip attacks, padding oracle attacks, and all forms of ciphertext tampering.</p>
-        <p><strong>Tag truncation:</strong> Per <strong>NIST SP 800-38D §5.2.1.2</strong>, truncating the authentication tag below 128 bits reduces the effort required for a forgery attack. A <em>t</em>-bit tag provides at most 2<sup>−t</sup> forgery probability per attempt. Tags shorter than 96 bits are not recommended.</p>
+        <p>GCM provides authenticated encryption — when used correctly, tag verification detects unauthorized changes to the ciphertext, AAD, nonce, or tag with high probability. Authentication assurance is strong, but not absolute. GCM uses no padding, avoiding padding oracle attacks.</p>
+        <p><strong>Tag truncation:</strong> A uniformly random guess of a <em>t</em>-bit tag succeeds with probability 2<sup>−t</sup> for fixed inputs. This is not a general upper bound on GCM forgery probability: targeted attacks can have higher success rates depending on ciphertext and AAD lengths. Overall risk also depends on verification attempts and total data processed under the same key. <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf#page=34" target="_blank" rel="noopener noreferrer">NIST SP 800-38D Appendix B</a> describes a targeted forgery with success probability approximately <em>n</em>/2<sup><em>t</em></sup>, where <em>n</em> is the number of 128-bit blocks in the GHASH encoding of the ciphertext and AAD. Use 128-bit tags by default; 32- and 64-bit tags require the special length and usage limits in Appendix C.</p>
         <p><strong>Real-world incident:</strong>
           the <a href="https://eprint.iacr.org/2016/475.pdf" target="_blank" rel="noopener noreferrer">"forbidden attack" (Joux, 2006)</a> — if a GCM nonce ever repeats, the attacker can recover H and forge arbitrary ciphertexts; multiple HTTPS frontends shipped repeating nonces before this was widely audited.</p>
       </div>
