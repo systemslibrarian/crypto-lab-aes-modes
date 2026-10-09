@@ -6,7 +6,7 @@
  * single-block trick doesn't reverse cleanly with WebCrypto's padding.
  */
 
-import { ecb as nobleEcb } from '@noble/ciphers/aes';
+import { ecb as nobleEcb } from '@noble/ciphers/aes.js';
 import {
   hexEncode,
   textToBytes,

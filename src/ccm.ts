@@ -9,7 +9,7 @@
  * not only the <2^16 case.
  */
 
-import { ecb } from '@noble/ciphers/aes';
+import { ecb } from '@noble/ciphers/aes.js';
 import { hexEncode, textToBytes, bytesToText, announceError } from './ui';
 import { ccmMath, renderMath } from './helpers';
 
