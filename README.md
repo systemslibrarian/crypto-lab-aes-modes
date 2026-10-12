@@ -88,3 +88,7 @@ bound applies when decrypting ciphertext, excluding its authentication tag.
 unit tests, the production build, and all three browser engines before publishing.
 A successful request is not a successful deployment; check the run and the public
 application separately. Rejected requests keep their failing exit status.
+
+## Wider-block proposal
+
+The live demo now distinguishes the [1 June 2026 wGCM consultation](https://csrc.nist.gov/pubs/sp/800/38/d/r1/2prd) from finalized GCM and AES key-size selection. It does not implement wGCM.
