@@ -2,7 +2,7 @@
 
 ## What It Is
 
-This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, along with a live CBC padding oracle attack. AES is a **symmetric** block cipher, and the mode determines whether you get confidentiality only (`ECB`, `CBC`, `CTR`) or authenticated encryption (`GCM`, `CCM`). These modes solve the practical problem of encrypting messages longer than one block while handling IVs/nonces and, in the AEAD cases, integrity for ciphertext and `AAD`. The demo is educational: it shows real behavior and failure cases, but it is not a new cryptographic protocol.
+This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, `CBC`, `CTR`, `OFB`, `GCM`, and `CCM`, along with a live CBC padding oracle attack. AES is a **symmetric** block cipher, and the mode determines whether you get confidentiality only (`ECB`, `CBC`, `CTR`, `OFB`) or authenticated encryption (`GCM`, `CCM`). These modes solve the practical problem of encrypting messages longer than one block while handling IVs/nonces and, in the AEAD cases, integrity for ciphertext and `AAD`. The demo is educational: it shows real behavior and failure cases, but it is not a new cryptographic protocol.
 
 ## When to Use It
 
@@ -17,7 +17,7 @@ This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, 
 
 **[systemslibrarian.github.io/crypto-lab-aes-modes](https://systemslibrarian.github.io/crypto-lab-aes-modes/)**
 
-The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, then inspect the resulting key, `IV`/nonce, ciphertext, and authentication data where applicable. It also includes an image upload for the ECB pattern-leakage demo, a manual `IV` input for CBC, a two-message nonce reuse setup for CTR, `AAD` and `Tag Length (bits)` controls for GCM, and step-by-step controls for the padding oracle attack. It demonstrates encryption, tamper detection, and attack behavior rather than a general-purpose decrypt workflow.
+The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `OFB`, `GCM`, and `CCM`, then inspect the resulting key, `IV`/nonce, ciphertext, and authentication data where applicable. It also includes an image upload for the ECB pattern-leakage demo, a manual `IV` input for CBC, a two-message nonce reuse setup for CTR, `AAD` and `Tag Length (bits)` controls for GCM, and step-by-step controls for the padding oracle attack. It demonstrates encryption, tamper detection, and attack behavior rather than a general-purpose decrypt workflow.
 
 ## What Can Go Wrong
 
@@ -36,6 +36,10 @@ The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `GCM`, and `CCM`, th
 - **Zigbee / IEEE 802.15.4:** low-power mesh networking standards use the CCM family for authenticated encryption.
 
 ## Correctness & Tests
+
+OFB is a confidentiality-only stream mode. Its new tab measures precomputation and random access, demonstrates IV reuse and exact bit changes, and contrasts its unpadded length with CBC. The key and IV are exposed only for this teaching demonstration.
+
+- **OFB:** two four-block NIST examples (AES-128 and AES-256), including every intermediate keystream output from [NIST AES_OFB.pdf](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_OFB.pdf), also SP 800-38A F.4.1/F.4.5. Derived 60-byte truncations are labelled as derived. Two direct WebCrypto AES block pins from F.1.1/F.1.5 close the previous noble-only coverage gap. Independent noble ECB checks lengths 0–200. The new `e2e/claims.spec.ts` derives OFB with WebCrypto AES-CTR and checks each displayed result, counter, retirement and the negative claim.
 
 Most modes here delegate to the platform's audited `WebCrypto` (AES-CBC, AES-CTR, AES-GCM). The two hand-rolled pieces — the `CCM` construction (`formatB0` / CBC-MAC / CTR in `src/ccm.ts`) and the `ECB` block loop — are the custom crypto, so they are pinned by unit tests:
 

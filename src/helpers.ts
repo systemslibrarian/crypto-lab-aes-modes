@@ -222,6 +222,14 @@ export function ctrMath(
   return steps;
 }
 
+export function ofbMath(iv: Uint8Array, stream: Uint8Array, plaintext: Uint8Array, ciphertext: Uint8Array): MathStep[] {
+  return Array.from({ length: Math.ceil(plaintext.length / 16) }, (_, i) => ({
+    label: `Block ${i + 1}`,
+    expression: `y${i + 1} = AES_K(${short(i === 0 ? iv : stream.slice((i - 1) * 16, i * 16))}); C = ${short(plaintext.slice(i * 16, i * 16 + 16))} ⊕ ${short(stream.slice(i * 16, i * 16 + 16))} = ${short(ciphertext.slice(i * 16, i * 16 + 16))}`,
+    note: 'AES output feeds the next AES input; the message never enters the chain.',
+  }));
+}
+
 export function gcmMath(
   nonce: Uint8Array,
   plaintext: Uint8Array,

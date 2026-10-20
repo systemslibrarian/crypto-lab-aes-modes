@@ -18,11 +18,4 @@ export const NONTEXT_BASELINE: Record<
   { ratio: number; required: number; unverified: boolean }
 > = {
   "control-boundary|a.cl-btn": { ratio: 1.5, required: 3.0, unverified: false },
-  "control-boundary|button#tab-cbc.mode-tab": { ratio: 1.0, required: 3.0, unverified: false },
-  "control-boundary|button#tab-ccm.mode-tab": { ratio: 1.0, required: 3.0, unverified: false },
-  "control-boundary|button#tab-compare.mode-tab": { ratio: 1.0, required: 3.0, unverified: false },
-  "control-boundary|button#tab-ctr.mode-tab": { ratio: 1.0, required: 3.0, unverified: false },
-  "control-boundary|button#tab-ecb.mode-tab": { ratio: 1.0, required: 3.0, unverified: false },
-  "control-boundary|button#tab-gcm.mode-tab": { ratio: 1.0, required: 3.0, unverified: false },
-  "control-boundary|button#tab-oracle.mode-tab": { ratio: 1.0, required: 3.0, unverified: false }
 };

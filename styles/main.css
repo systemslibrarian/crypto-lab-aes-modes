@@ -19,6 +19,7 @@
      sole boundary and WCAG 2.1 SC 1.4.11 requires 3:1. --border is unchanged for
      decorative rules (card outlines, table rules, hex/log frames). */
   --border-strong: #848f9f;
+  --control-border: var(--border-strong);
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-subtle: #eaf2ff; /* was #dbeafe: --accent text on it = 4.24:1 → 4.59:1 */
@@ -280,8 +281,8 @@ body {
   min-width: 60px;
   min-height: 44px;
   padding: 0.5rem 0.5rem;
-  border: 2px solid transparent;
-  border-bottom: 3px solid transparent;
+  border: 2px solid var(--control-border);
+  border-bottom: 3px solid var(--control-border);
   background-color: var(--bg);
   color: var(--text-muted);
   font-family: var(--font-mono);
@@ -1587,3 +1588,13 @@ body {
 [data-theme="dark"] .cross-badge:hover { background-color: #4577b4; } /* was #60a5fa on #ffffff = 2.54:1 → 4.61:1 */
 [data-theme="dark"] .predict-reveal:hover { background-color: #4577b4; } /* was #60a5fa on #ffffff = 2.54:1 → 4.61:1 */
 [data-theme="dark"] .oracle-byte.active { color: #000; } /* dark --warning #fbbf24 is light: black = 12.58:1 */
+
+/* OFB extends the existing mode panel and status palette. */
+.ofb-structure { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin-block:1rem; }
+.ofb-structure p, .ofb-stream-row { padding:.75rem; border:1px solid var(--border-strong); border-radius:var(--radius-sm); }
+.ofb-stream-row { margin-block:.5rem; overflow-wrap:anywhere; }
+.ofb-output { white-space:pre-wrap; overflow-wrap:anywhere; margin-block:1rem; }
+#panel-ofb .hex-output { display:block; white-space:pre-wrap; overflow-wrap:anywhere; }
+#panel-ofb h3 { margin-top:1.5rem; }
+.ofb-alarm { color:var(--danger); background:var(--danger-bg); border:2px solid var(--danger); padding:1rem; white-space:pre-wrap; overflow-wrap:anywhere; margin-block:1rem; }
+@media(max-width:640px) { .ofb-structure { grid-template-columns:1fr; } }

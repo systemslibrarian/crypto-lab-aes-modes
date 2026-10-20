@@ -1,0 +1,62 @@
+[
+  {
+    "name": "ciphertext feedback",
+    "sourceDiff": "diff --git a/src/ofb.ts b/src/ofb.ts\nindex 7ea4dcb..03ee776 100644\n--- a/src/ofb.ts\n+++ b/src/ofb.ts\n@@ -23,7 +23,7 @@ export async function ofbKeystream(key: CryptoKey, iv: Uint8Array, blocks: numbe\n }\n // [extension] point: CFB would feed ciphertext back here. OFB feeds AES output.\n export async function ofbXor(key: CryptoKey, iv: Uint8Array, data: Uint8Array): Promise<Uint8Array> {\n-  return xor(data, await ofbKeystream(key, iv, Math.ceil(data.length / 16)));\n+  const out = new Uint8Array(data.length); let previous: Uint8Array = iv.slice(); for (let i=0;i<data.length;i+=16) { const y = await ecbEncryptBlock(key, previous); const c = xor(data.slice(i,i+16),y); out.set(c,i); previous=c; } return out;\n }\n export async function ofbDecryptBlock(key: CryptoKey, iv: Uint8Array, ct: Uint8Array, i: number, counter?: EvaluationCounter): Promise<Uint8Array> {\n   const n = Math.ceil(ct.length / 16);\n",
+    "baseline": "a3b9bf6de587efc6e6b9edf00fa14d86bbf061ce163802dc9564737a7f9daad1",
+    "mutant": "2fc03441b483fdf2257f7926553d6380de1f0b36a706397115e20ff543cb0b74",
+    "namedTest": "AES-128 four blocks and every feedback output",
+    "assertionFailure": true,
+    "retries": 0,
+    "restoredGreen": true
+  },
+  {
+    "name": "padded final block",
+    "sourceDiff": "diff --git a/src/ofb.ts b/src/ofb.ts\nindex 7ea4dcb..6728bde 100644\n--- a/src/ofb.ts\n+++ b/src/ofb.ts\n@@ -104,7 +104,7 @@ export function mountOFBPanel(): void {\n     const pt = textToBytes(val('plaintext'));\n     if (pt.length > session.stream.length) throw new Error(`Prepare at least ${Math.ceil(pt.length / 16)} blocks for these ${pt.length} bytes.`);\n     const before = session.counter.calls;\n-    const ct = xor(pt, session.stream);\n+    const ct = new Uint8Array(Math.ceil(pt.length / 16) * 16); ct.set(xor(pt, session.stream));\n     const during = session.counter.calls - before;\n     const cbc = new Uint8Array(await aesEncrypt({ name: 'AES-CBC', iv: session.iv }, await getKey(), pt));\n     if (version !== epoch) return;\n",
+    "baseline": "a3b9bf6de587efc6e6b9edf00fa14d86bbf061ce163802dc9564737a7f9daad1",
+    "mutant": "a392d7f19792f4f0d19874192c5ff7263fb82e2ad14aa85fc263db4d09fcd32d",
+    "namedTest": "OFB precomputation",
+    "assertionFailure": true,
+    "retries": 0,
+    "restoredGreen": true
+  },
+  {
+    "name": "fresh second IV",
+    "sourceDiff": "diff --git a/src/ofbBroken.ts b/src/ofbBroken.ts\nindex 70471fc..b2b8fb5 100644\n--- a/src/ofbBroken.ts\n+++ b/src/ofbBroken.ts\n@@ -3,6 +3,6 @@ import { ofbXor } from './ofb';\n import { xor } from './helpers';\n export async function reuseOFB(key: CryptoKey, iv: Uint8Array, p1: Uint8Array, p2: Uint8Array) {\n   const c1 = await ofbXor(key, iv, p1);\n-  const c2 = await ofbXor(key, iv, p2);\n+  const c2 = await ofbXor(key, crypto.getRandomValues(new Uint8Array(16)), p2);\n   return { c1, c2, recovered: xor(xor(c1, c2), p1) };\n }\n",
+    "baseline": "a3b9bf6de587efc6e6b9edf00fa14d86bbf061ce163802dc9564737a7f9daad1",
+    "mutant": "2d8623aff3147cbd59bb71393728a52879a245f56074f36506593ff6caee1273",
+    "namedTest": "OFB IV reuse",
+    "assertionFailure": true,
+    "retries": 0,
+    "restoredGreen": true
+  },
+  {
+    "name": "calm modified verdict",
+    "sourceDiff": "diff --git a/src/ofb.ts b/src/ofb.ts\nindex 7ea4dcb..71ecef5 100644\n--- a/src/ofb.ts\n+++ b/src/ofb.ts\n@@ -166,7 +166,7 @@ export function mountOFBPanel(): void {\n     if (version !== epoch) return;\n     let changed = 0;\n     for (let i = 0; i < pt.length; i++) { let n = pt[i] ^ plain[i]; while (n) { changed += n & 1; n >>>= 1; } }\n-    el('modified').className = 'ofb-alarm';\n+    el('modified').className = 'ofb-output';\n     el('modified').dataset.verdict = 'modified';\n     put('modified', `⚠ DECRYPTED — AND MODIFIED\\n${readable(plain)}\\nOriginal ciphertext: ${hexEncode(ct)}\\nModified ciphertext: ${hexEncode(modified)}\\nPlaintext hex: ${hexEncode(plain)}\\n${changed} plaintext bits changed; ${plain.length} bytes retained; decryption completed without an error.\\nOFB gives confidentiality only: a modified ciphertext decrypts without any error, to a plaintext the attacker changed bit for bit.`);\n   }\n",
+    "baseline": "a3b9bf6de587efc6e6b9edf00fa14d86bbf061ce163802dc9564737a7f9daad1",
+    "mutant": "353c495a165993fc5249c191595e900c243dfb2f8b7540ad5e0696952bf8884f",
+    "namedTest": "OFB negative claim",
+    "assertionFailure": true,
+    "retries": 0,
+    "restoredGreen": true
+  },
+  {
+    "name": "AES counter during XOR",
+    "sourceDiff": "diff --git a/src/ofb.ts b/src/ofb.ts\nindex 7ea4dcb..30e29af 100644\n--- a/src/ofb.ts\n+++ b/src/ofb.ts\n@@ -105,7 +105,7 @@ export function mountOFBPanel(): void {\n     if (pt.length > session.stream.length) throw new Error(`Prepare at least ${Math.ceil(pt.length / 16)} blocks for these ${pt.length} bytes.`);\n     const before = session.counter.calls;\n     const ct = xor(pt, session.stream);\n-    const during = session.counter.calls - before;\n+    session.counter.calls++; const during = session.counter.calls - before;\n     const cbc = new Uint8Array(await aesEncrypt({ name: 'AES-CBC', iv: session.iv }, await getKey(), pt));\n     if (version !== epoch) return;\n     record = { iv: session.iv, pt, ct }; session.used = true; usedIVs.add(hexEncode(session.iv));\n",
+    "baseline": "a3b9bf6de587efc6e6b9edf00fa14d86bbf061ce163802dc9564737a7f9daad1",
+    "mutant": "60a7bb2c2bb40276e50d6e313085f6af650525522f0742e44ada2a1b82fabdf5",
+    "namedTest": "OFB precomputation",
+    "assertionFailure": true,
+    "retries": 0,
+    "restoredGreen": true
+  },
+  {
+    "name": "missing negative claim",
+    "sourceDiff": "diff --git a/src/ofb.ts b/src/ofb.ts\nindex 7ea4dcb..a874b9b 100644\n--- a/src/ofb.ts\n+++ b/src/ofb.ts\n@@ -168,7 +168,7 @@ export function mountOFBPanel(): void {\n     for (let i = 0; i < pt.length; i++) { let n = pt[i] ^ plain[i]; while (n) { changed += n & 1; n >>>= 1; } }\n     el('modified').className = 'ofb-alarm';\n     el('modified').dataset.verdict = 'modified';\n-    put('modified', `⚠ DECRYPTED — AND MODIFIED\\n${readable(plain)}\\nOriginal ciphertext: ${hexEncode(ct)}\\nModified ciphertext: ${hexEncode(modified)}\\nPlaintext hex: ${hexEncode(plain)}\\n${changed} plaintext bits changed; ${plain.length} bytes retained; decryption completed without an error.\\nOFB gives confidentiality only: a modified ciphertext decrypts without any error, to a plaintext the attacker changed bit for bit.`);\n+    put('modified', `⚠ DECRYPTED — AND MODIFIED\\n${readable(plain)}\\nOriginal ciphertext: ${hexEncode(ct)}\\nModified ciphertext: ${hexEncode(modified)}\\nPlaintext hex: ${hexEncode(plain)}\\n${changed} plaintext bits changed; ${plain.length} bytes retained; decryption completed without an error.\\n`);\n   }\n   action('flip', async () => {\n     if (!record) return;\n",
+    "baseline": "a3b9bf6de587efc6e6b9edf00fa14d86bbf061ce163802dc9564737a7f9daad1",
+    "mutant": "ffb7b8b39c2b89cd35819087a3b1668e42374d8bf8a0d84e59865c8a49f1b9ac",
+    "namedTest": "OFB negative claim",
+    "assertionFailure": true,
+    "retries": 0,
+    "restoredGreen": true
+  }
+]

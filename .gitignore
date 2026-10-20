@@ -28,3 +28,5 @@ playwright-report/
 *.sln
 *.sw?
 chat.md
+
+mutation-logs/

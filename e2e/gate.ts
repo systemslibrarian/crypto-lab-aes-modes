@@ -166,7 +166,7 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
 
   // Exactly one of the seven mode panels is on screen, and it is ECB.
-  await expect(page.locator('[role="tabpanel"]')).toHaveCount(7);
+  await expect(page.locator('[role="tabpanel"]')).toHaveCount(8);
   await expect(page.locator('[role="tabpanel"]:not([hidden])')).toHaveCount(1);
   await expect(page.locator('#panel-ecb')).toBeVisible();
   await expect(page.locator('#tab-ecb')).toHaveAttribute('aria-selected', 'true');
@@ -698,6 +698,22 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await quiz('ctr', 'd', 'quiz-incorrect');
   await quiz('ctr', 'b', 'quiz-correct');
 
+  // ── OFB ─────────────────────────────────────────────────────────────────
+  await openTab('ofb', 'ofb — panel opened');
+  await reveal('ofb');
+  await page.locator('#ofb-sixty').click();
+  await expect(page.locator('#ofb-ciphertext')).not.toBeEmpty();
+  await scanAt('ofb — generated and encrypted');
+  await page.locator('#ofb-access-btn').click();
+  await expect(page.locator('#ofb-access')).not.toBeEmpty();
+  await scanAt('ofb — random access');
+  await page.locator('#ofb-reuse').click();
+  await expect(page.locator('#ofb-attack')).not.toBeEmpty();
+  await scanAt('ofb — reused IV');
+  await page.locator('#ofb-preset').click();
+  await expect(page.locator('#ofb-modified')).not.toBeEmpty();
+  await scanAt('ofb — modified ciphertext');
+
   // ── GCM ─────────────────────────────────────────────────────────────────
   await openTab('gcm', 'gcm — panel opened');
   await reveal('gcm');
@@ -775,7 +791,7 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await openTab('compare', 'compare — panel opened');
 
   await page.locator('#compare-btn').click();
-  await expect(page.locator('#compare-output .compare-card')).toHaveCount(5);
+  await expect(page.locator('#compare-output .compare-card')).toHaveCount(6);
   await expect(page.locator('.compare-dup-warn')).toBeVisible();
   await scanAt('compare — all five modes over a repeating plaintext');
 
@@ -787,7 +803,7 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
 
   await page.locator('#compare-plaintext').fill('No repeats here at all, so nothing should be flagged as duplicated.');
   await page.locator('#compare-btn').click();
-  await expect(page.locator('#compare-output .compare-card')).toHaveCount(5);
+  await expect(page.locator('#compare-output .compare-card')).toHaveCount(6);
   await expect(page.locator('.compare-dup-warn')).toHaveCount(0);
   await scanAt('compare — no mode leaks structure, including ECB');
 

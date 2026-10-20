@@ -6,6 +6,7 @@ import { initTabs } from './ui';
 import { mountECBPanel } from './ecb';
 import { mountCBCPanel } from './cbc';
 import { mountCTRPanel } from './ctr';
+import { mountOFBPanel } from './ofb';
 import { mountGCMPanel } from './gcm';
 import { mountForbiddenPanel } from './forbidden';
 import { mountCCMPanel } from './ccm';
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   mountECBPanel();
   mountCBCPanel();
   mountCTRPanel();
+  mountOFBPanel();
   mountGCMPanel();
   mountForbiddenPanel();
   mountCCMPanel();

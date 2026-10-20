@@ -33,7 +33,7 @@ export async function exportKeyHex(key: CryptoKey): Promise<string> {
   return hexEncode(new Uint8Array(raw));
 }
 
-async function ecbEncryptBlock(key: CryptoKey, block: Uint8Array): Promise<Uint8Array> {
+export async function ecbEncryptBlock(key: CryptoKey, block: Uint8Array): Promise<Uint8Array> {
   const ct = await aesEncrypt({ name: 'AES-CBC', iv: ZERO_IV }, key, block);
   return new Uint8Array(ct).slice(0, BLOCK_SIZE);
 }

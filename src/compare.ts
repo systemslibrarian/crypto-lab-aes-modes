@@ -1,7 +1,7 @@
 /**
- * compare.ts — Same-plaintext, all-five-modes side-by-side renderer.
+ * compare.ts — Same-plaintext, all-six-modes side-by-side renderer.
  *
- * Encrypts the same input under ECB, CBC, CTR, GCM, CCM with fresh random
+ * Encrypts the same input under ECB, CBC, CTR, OFB, GCM, CCM with fresh random
  * key/nonce per mode, then draws each ciphertext as a block grid so students
  * can SEE that only ECB leaks repeated blocks.
  */
@@ -9,6 +9,7 @@
 import { ecbEncrypt, generateECBKey, analyzeBlocks } from './ecb';
 import { cbcEncrypt } from './cbc';
 import { ctrEncrypt } from './ctr';
+import { ofbXor } from './ofb';
 import { gcmEncrypt } from './gcm';
 import { ccmEncrypt } from './ccm';
 import { hexEncode, textToBytes, announceError } from './ui';
@@ -61,6 +62,7 @@ function padForGrid(ct: Uint8Array): Uint8Array {
 interface ModeCard {
   name: string;
   status: 'avoid' | 'legacy' | 'ok' | 'recommended';
+  statusLabel?: string;
   ciphertext: Uint8Array;
   note: string;
 }
@@ -71,7 +73,7 @@ function appendCard(container: HTMLElement, card: ModeCard): void {
   wrapper.innerHTML = `
     <div class="compare-card-head">
       <h3>${card.name}</h3>
-      <span class="status-chip status-${card.status}">${card.status.toUpperCase()}</span>
+      <span class="status-chip status-${card.status}">${card.statusLabel ?? card.status.toUpperCase()}</span>
     </div>
     <div class="compare-grid-row"></div>
     <p class="compare-card-note">${card.note}</p>
@@ -117,6 +119,9 @@ export function mountComparePanel(): void {
       ctrCounter[15] = 1;
       const ctrCt = await ctrEncrypt(ctrKey, ctrCounter, pt);
 
+      const ofbKey = await generateECBKey();
+      const ofbCt = await ofbXor(ofbKey, crypto.getRandomValues(new Uint8Array(16)), pt);
+
       const gcmKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
       const gcmNonce = crypto.getRandomValues(new Uint8Array(12));
       const { ciphertext: gcmCt } = await gcmEncrypt(gcmKey, gcmNonce, pt, new Uint8Array(0), 128);
@@ -144,6 +149,7 @@ export function mountComparePanel(): void {
         ciphertext: ctrCt,
         note: 'Plaintext XOR keystream(counter). No repeats. Length is preserved exactly.',
       });
+      appendCard(out, { name: 'OFB', status: 'legacy', statusLabel: 'CONFIDENTIALITY ONLY', ciphertext: ofbCt, note: 'AES output feeds the next block. No padding or authentication; never reuse an IV with the same key.' });
       appendCard(out, {
         name: 'GCM',
         status: 'recommended',

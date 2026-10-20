@@ -209,6 +209,9 @@
         <span class="tab-label">CTR</span>
         <span class="status-chip status-acceptable">OK<span class="sr-only"> — acceptable</span></span>
       </button>
+      <button role="tab" class="mode-tab" id="tab-ofb" aria-controls="panel-ofb" aria-selected="false" data-mode="ofb">
+        <span class="tab-label">OFB</span><span class="status-chip status-legacy">CONFIDENTIALITY ONLY</span>
+      </button>
       <button role="tab" class="mode-tab" id="tab-gcm" aria-controls="panel-gcm" aria-selected="false" data-mode="gcm">
         <span class="tab-label">GCM</span>
         <span class="status-chip status-recommended">REC<span class="sr-only">ommended</span></span>
@@ -578,6 +581,42 @@
     </section>
 
     <!-- Panel: GCM -->
+    <section role="tabpanel" id="panel-ofb" class="mode-panel" aria-labelledby="tab-ofb" hidden>
+      <div class="panel-header"><h2>OFB: Prepare the Stream First</h2><span class="status-chip status-legacy">CONFIDENTIALITY ONLY</span></div>
+      <p class="panel-desc">OFB encrypts an IV, then encrypts that output, then encrypts that output again. XOR the resulting stream with your message. You can prepare the stream before knowing the message, but you must compute it in order. AES decryption is never needed.</p>
+      <div class="ofb-structure"><p><strong>OFB feedback:</strong> IV → AES → y₁ → AES → y₂ → AES → y₃<br>C₁ = P₁ ⊕ y₁; C₂ = P₂ ⊕ y₂; C₃ = P₃ ⊕ y₃</p><p><strong>CTR independent inputs:</strong><br>AES(counter 1) · AES(counter 2) · AES(counter 3)<br>Any counter block can be evaluated on its own.</p></div>
+      <div class="demo-controls">
+        <div class="input-group"><label for="ofb-size">AES key size</label><select id="ofb-size"><option value="128">128 bits</option><option value="256">256 bits</option></select></div>
+        <div class="input-group"><label for="ofb-iv">IV (32 hexadecimal characters)</label><input id="ofb-iv" autocomplete="off" spellcheck="false"><button id="ofb-new-iv" class="btn btn-secondary">New random IV</button></div>
+        <h3>1. Precompute, then encrypt</h3>
+        <div class="input-group"><label for="ofb-blocks">Keystream blocks to prepare (16 bytes each)</label><input id="ofb-blocks" type="number" min="1" max="128" value="4"></div>
+        <button id="ofb-generate" class="btn btn-primary">Generate keystream</button>
+        <div class="input-group"><label for="ofb-plaintext">Plaintext (you may leave this empty)</label><textarea id="ofb-plaintext" rows="3" maxlength="2048"></textarea></div>
+        <button id="ofb-encrypt" class="btn btn-primary" disabled>Encrypt</button>
+      </div>
+      <div class="demo-output ofb-output" aria-live="polite">
+        <p id="ofb-notice"></p><h3>Teaching key (hex)</h3><output id="ofb-key" class="hex-output" tabindex="0" role="group" aria-label="OFB teaching key in hexadecimal"></output>
+        <h3>IV used (hex)</h3><output id="ofb-iv-output" class="hex-output" tabindex="0" role="group" aria-label="OFB IV in hexadecimal"></output>
+        <p id="ofb-generation"></p><div id="ofb-stream"></div><p id="ofb-xor-count"></p>
+        <h3>Plaintext bytes (hex)</h3><output id="ofb-plaintext-hex" class="hex-output" tabindex="0" role="group" aria-label="OFB plaintext in hexadecimal"></output>
+        <h3>Ciphertext (hex)</h3><output id="ofb-ciphertext" class="hex-output" tabindex="0" role="group" aria-label="OFB ciphertext in hexadecimal"></output><div id="ofb-math"></div>
+      </div>
+      <h3>2. Random access costs</h3><p>Both modes decrypt the same chosen block. The counts measure only the AES work needed to access that block, after its ciphertext is available.</p>
+      <div class="input-group"><label for="ofb-index">Block number (starts at 1)</label><input id="ofb-index" type="number" min="1" value="3"></div>
+      <button id="ofb-access-btn" class="btn btn-secondary" disabled>Decrypt only this block</button><p id="ofb-access" class="ofb-output" aria-live="polite"></p>
+      <h3>3. Deliberately broken: reuse the IV</h3><p>A known first message exposes the overlapping bytes of the second. Try different lengths. Explore <a href="https://systemslibrarian.github.io/crypto-lab-otp-vault/">OTP Vault’s crib-dragging</a>.</p>
+      <div class="input-group"><label for="ofb-plaintext2">Second plaintext</label><textarea id="ofb-plaintext2" rows="2" maxlength="2048">RETREAT AT DUSK</textarea></div>
+      <button id="ofb-reuse" class="btn btn-secondary">Encrypt both with the same IV — deliberately broken</button><div id="ofb-attack" class="ofb-output" aria-live="polite"></div>
+      <h3>4. Change a ciphertext bit</h3><div class="predict-prompt"><span class="predict-label">Predict:</span> Flip one ciphertext bit. How many plaintext bits change? <button class="predict-reveal" aria-expanded="false">Reveal</button><span class="predict-answer">Exactly one. XOR changes that bit without spreading into its neighbours or raising an error.</span></div>
+      <div class="input-group"><label for="ofb-bit">Ciphertext bit index (bit 0 is the first byte’s low bit)</label><input id="ofb-bit" type="number" min="0" value="0"></div>
+      <div id="ofb-bits" class="btn-row" role="group" aria-label="First ciphertext byte’s bits"></div>
+      <button id="ofb-flip" class="btn btn-secondary" disabled>Flip selected bit and decrypt</button>
+      <button id="ofb-preset" class="btn btn-secondary">PAY 0100 → PAY 9100</button><div id="ofb-modified" class="ofb-output" aria-live="polite"></div>
+      <p>Compare the spreading effect in <a href="#tab-cbc" id="ofb-cbc-link">CBC</a>.</p>
+      <h3>5. No padding</h3><button id="ofb-sixty" class="btn btn-secondary">Try a 60-byte message</button><p id="ofb-length" aria-live="polite"></p>
+      <p>Source: <a href="https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_OFB.pdf">NIST’s OFB intermediate values</a>; <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf">SP 800-38A §6.4</a>. A fresh IV is used for each normal encryption. OFB provides no authentication; use an authenticated mode when messages may be modified.</p>
+    </section>
+
     <section role="tabpanel" id="panel-gcm" class="mode-panel" aria-labelledby="tab-gcm" hidden>
       <div class="panel-header">
         <h2>GCM: Authenticated Encryption</h2>
@@ -868,17 +907,17 @@
     <!-- Panel: Compare -->
     <section role="tabpanel" id="panel-compare" class="mode-panel" aria-labelledby="tab-compare" hidden>
       <div class="panel-header">
-        <h2>Same plaintext, all five modes</h2>
+        <h2>Same plaintext, all six modes</h2>
         <span class="status-chip status-compare">SIDE-BY-SIDE</span>
       </div>
-      <p class="panel-desc">Type any plaintext (try one with repeated 16-byte blocks). The lab encrypts it under <strong>ECB</strong>, <strong>CBC</strong>, <strong>CTR</strong>, <strong>GCM</strong>, and <strong>CCM</strong> with fresh random keys/nonces and renders the ciphertext block grids side-by-side. ECB will show repeats; the others won't.</p>
+      <p class="panel-desc">Type any plaintext (try one with repeated 16-byte blocks). The lab encrypts it under <strong>ECB</strong>, <strong>CBC</strong>, <strong>CTR</strong>, <strong>OFB</strong>, <strong>GCM</strong>, and <strong>CCM</strong> with fresh random keys/nonces and renders the ciphertext block grids side-by-side. ECB will show repeats; the others won't.</p>
 
       <div class="demo-controls">
         <div class="input-group">
           <label for="compare-plaintext">Plaintext</label>
           <textarea id="compare-plaintext" rows="3" placeholder='Try "YELLOW SUBMARINE" repeated 4 times…'></textarea>
         </div>
-        <button id="compare-btn" class="btn btn-primary">Encrypt under all 5 modes</button>
+        <button id="compare-btn" class="btn btn-primary">Encrypt under all 6 modes</button>
       </div>
 
       <div class="compare-grid" id="compare-output" aria-live="polite"></div>
