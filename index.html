@@ -589,6 +589,7 @@
         <div class="input-group"><label for="ofb-size">AES key size</label><select id="ofb-size"><option value="128">128 bits</option><option value="256">256 bits</option></select></div>
         <div class="input-group"><label for="ofb-iv">IV (32 hexadecimal characters)</label><input id="ofb-iv" autocomplete="off" spellcheck="false"><button id="ofb-new-iv" class="btn btn-secondary">New random IV</button></div>
         <h3>1. Precompute, then encrypt</h3>
+        <p>Counts show logical AES block evaluations in the mode formula, not a performance benchmark. This lab obtains each block through a WebCrypto CBC call, which also encrypts a padding block that we discard. That wrapper overhead is excluded from the counts.</p>
         <div class="input-group"><label for="ofb-blocks">Keystream blocks to prepare (16 bytes each)</label><input id="ofb-blocks" type="number" min="1" max="128" value="4"></div>
         <button id="ofb-generate" class="btn btn-primary">Generate keystream</button>
         <div class="input-group"><label for="ofb-plaintext">Plaintext (you may leave this empty)</label><textarea id="ofb-plaintext" rows="3" maxlength="2048"></textarea></div>
@@ -601,7 +602,7 @@
         <h3>Plaintext bytes (hex)</h3><output id="ofb-plaintext-hex" class="hex-output" tabindex="0" role="group" aria-label="OFB plaintext in hexadecimal"></output>
         <h3>Ciphertext (hex)</h3><output id="ofb-ciphertext" class="hex-output" tabindex="0" role="group" aria-label="OFB ciphertext in hexadecimal"></output><div id="ofb-math"></div>
       </div>
-      <h3>2. Random access costs</h3><p>Both modes decrypt the same chosen block. The counts measure only the AES work needed to access that block, after its ciphertext is available.</p>
+      <h3>2. Random access costs</h3><p>Both modes decrypt the same chosen block after its ciphertext is available. This experiment starts from the IV with no cached keystream: OFB recomputes every preceding stream block, while CTR evaluates one independent counter. If the needed OFB stream block was already cached, accessing it would require no new AES evaluation.</p>
       <div class="input-group"><label for="ofb-index">Block number (starts at 1)</label><input id="ofb-index" type="number" min="1" value="3"></div>
       <button id="ofb-access-btn" class="btn btn-secondary" disabled>Decrypt only this block</button><p id="ofb-access" class="ofb-output" aria-live="polite"></p>
       <h3>3. Deliberately broken: reuse the IV</h3><p>A known first message exposes the overlapping bytes of the second. Try different lengths. Explore <a href="https://systemslibrarian.github.io/crypto-lab-otp-vault/">OTP Vault’s crib-dragging</a>.</p>

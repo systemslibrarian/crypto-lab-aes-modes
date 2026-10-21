@@ -63,3 +63,17 @@ it remain absent. What It Is, comparison text, and Correctness & Tests are updat
 Summary: 68 unit + 2 publishing-request + 21 local browser cases passed;
 §4.1c 6/6 killed; accessibility gate passed. Final remote SHA and served-byte
 verification are recorded in the delivery after publication.
+
+## Educational accuracy follow-up
+
+The OFB counters now explicitly count logical AES block evaluations, rather
+than claiming to measure all work performed by the browser. The CBC wrapper
+also encrypts a discarded padding block for each logical evaluation; see
+[WebCrypto AES-CBC](https://www.w3.org/TR/2017/REC-WebCryptoAPI-20170126/#aes-cbc-operations).
+Random-access costs now state their no-cached-keystream assumption and explain
+that a cached OFB stream block needs no new AES evaluation. Mode arithmetic
+and counter values are unchanged.
+
+Validation: 68 unit tests, two publishing-request tests, and all 21 Chromium
+browser tests passed, including accessibility and independent AES-CTR
+re-derivation. The original three-engine CI gate is unchanged.

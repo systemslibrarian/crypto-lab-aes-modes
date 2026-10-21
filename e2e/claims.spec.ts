@@ -24,11 +24,11 @@ test('OFB precomputation, measured access and unpadded length match independent 
     return values;
   }, { key, iv });
   expect(blocks).toEqual(independent);
-  await expect(page.locator('#ofb-generation')).toHaveText('4 AES evaluations during generation; 64 bytes prepared.');
+  await expect(page.locator('#ofb-generation')).toHaveText('4 logical AES block evaluations during generation; 64 bytes prepared.');
   const message = '0123456789'.repeat(6);
   await page.locator('#ofb-plaintext').fill(message);
   await page.locator('#ofb-encrypt').click();
-  await expect(page.locator('#ofb-xor-count')).toHaveText('0 AES evaluations during XOR.');
+  await expect(page.locator('#ofb-xor-count')).toHaveText('0 logical AES block evaluations during XOR.');
   const pt = bytes(await read(page, 'plaintext-hex')), ct = bytes(await read(page, 'ciphertext'));
   expect(pt).toEqual(Buffer.from(message)); expect(ct.length).toBe(pt.length);
   expect(xor(ct, pt)).toEqual(bytes(blocks.join('')).subarray(0, pt.length));
@@ -37,7 +37,7 @@ test('OFB precomputation, measured access and unpadded length match independent 
     await page.locator('#ofb-index').fill(String(i)); await page.locator('#ofb-access-btn').click();
     await expect(page.locator('.ofb-access-row')).toHaveCount(i);
     const expected = pt.subarray((i - 1) * 16, i * 16).toString('hex');
-    await expect(page.locator('#ofb-access')).toContainText(`Block ${i}: OFB ${blocks.slice(0, i).length} AES evaluations; CTR 1 AES evaluation. OFB plaintext ${expected}; CTR plaintext ${expected}.`);
+    await expect(page.locator('#ofb-access')).toContainText(`Block ${i}: OFB ${blocks.slice(0, i).length} logical AES block evaluations; CTR 1 logical AES block evaluation. OFB plaintext ${expected}; CTR plaintext ${expected}.`);
   }
   // Each normal encryption consumes a distinct IV; a no-op size selection preserves prepared material.
   await page.locator('#ofb-encrypt').click(); await expect(page.locator('#ofb-iv-output')).not.toHaveText(iv);

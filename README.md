@@ -37,7 +37,7 @@ The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `OFB`, `GCM`, and `C
 
 ## Correctness & Tests
 
-OFB is a confidentiality-only stream mode. Its new tab measures precomputation and random access, demonstrates IV reuse and exact bit changes, and contrasts its unpadded length with CBC. The key and IV are exposed only for this teaching demonstration.
+OFB is a confidentiality-only stream mode. Its new tab counts logical AES block evaluations for precomputation and random access, demonstrates IV reuse and exact bit changes, and contrasts its unpadded length with CBC. Random access starts from the IV without cached keystream. The counts exclude the discarded padding block that the WebCrypto CBC wrapper also encrypts, so they are not an implementation-work or timing benchmark (see [WebCrypto AES-CBC encryption](https://www.w3.org/TR/2017/REC-WebCryptoAPI-20170126/#aes-cbc-operations)). The key and IV are exposed only for this teaching demonstration.
 
 - **OFB:** two four-block NIST examples (AES-128 and AES-256), including every intermediate keystream output from [NIST AES_OFB.pdf](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_OFB.pdf), also SP 800-38A F.4.1/F.4.5. Derived 60-byte truncations are labelled as derived. Two direct WebCrypto AES block pins from F.1.1/F.1.5 close the previous noble-only coverage gap. Independent noble ECB checks lengths 0–200. The new `e2e/claims.spec.ts` derives OFB with WebCrypto AES-CTR and checks each displayed result, counter, retirement and the negative claim.
 

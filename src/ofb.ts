@@ -94,7 +94,7 @@ export function mountOFBPanel(): void {
       const code = document.createElement('code'); code.textContent = hexEncode(stream.slice(i * 16, i * 16 + 16));
       row.append(label, code); rows.append(row);
     }
-    put('generation', `${counter.calls} AES evaluations during generation; ${stream.length} bytes prepared.`);
+    put('generation', `${counter.calls} logical AES block evaluations during generation; ${stream.length} bytes prepared.`);
     el('encrypt').removeAttribute('disabled');
   }
   async function encrypt() {
@@ -110,7 +110,7 @@ export function mountOFBPanel(): void {
     if (version !== epoch) return;
     record = { iv: session.iv, pt, ct }; session.used = true; usedIVs.add(hexEncode(session.iv));
     put('plaintext-hex', hexEncode(pt)); put('ciphertext', hexEncode(ct));
-    put('xor-count', `${during} AES evaluations during XOR.`);
+    put('xor-count', `${during} logical AES block evaluations during XOR.`);
     put('length', `${pt.length} plaintext bytes → ${ct.length} OFB ciphertext bytes; CBC with PKCS#7: ${cbc.length} bytes.${pt.length ? '' : ' Empty plaintext gives empty OFB ciphertext.'}`);
     renderMath(el('math'), ofbMath(session.iv, session.stream, pt, ct));
     for (const id of ['access-btn', 'flip']) el(id).toggleAttribute('disabled', ct.length === 0);
@@ -148,7 +148,7 @@ export function mountOFBPanel(): void {
     const ctrCt = new Uint8Array(await aesEncrypt({ name: 'AES-CTR', counter, length: 32 }, ctrKey, r.pt));
     const ctrPlain = await ctrDecryptBlock(k, counter, ctrCt, i, b);
     if (version !== epoch) return;
-    put('access', `Block ${i}: OFB ${a.calls} AES evaluations; CTR ${b.calls} AES evaluation. OFB plaintext ${hexEncode(plain)}; CTR plaintext ${hexEncode(ctrPlain)}. OFB traversed ${a.calls} feedback rows; CTR encrypted one independent counter.`);
+    put('access', `Block ${i}: OFB ${a.calls} logical AES block evaluations; CTR ${b.calls} logical AES block evaluation. OFB plaintext ${hexEncode(plain)}; CTR plaintext ${hexEncode(ctrPlain)}. OFB traversed ${a.calls} feedback rows; CTR encrypted one independent counter.`);
     for (const step of a.trace!) {
       const row = document.createElement('div'); row.className = 'ofb-access-row';
       row.textContent = `AES(${step.input}) → ${step.output}`; el('access').append(row);
