@@ -165,7 +165,7 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   ).toBe(true);
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
 
-  // Exactly one of the seven mode panels is on screen, and it is ECB.
+  // Exactly one of the nine mode panels is on screen, and it is ECB.
   await expect(page.locator('[role="tabpanel"]')).toHaveCount(9);
   await expect(page.locator('[role="tabpanel"]:not([hidden])')).toHaveCount(1);
   await expect(page.locator('#panel-ecb')).toBeVisible();
