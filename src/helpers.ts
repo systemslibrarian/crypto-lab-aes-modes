@@ -332,3 +332,8 @@ export function mountQuizzes(): void {
     });
   });
 }
+
+export function cfbMath(iv:Uint8Array,plaintext:Uint8Array,ciphertext:Uint8Array,s:8|128):MathStep[]{
+ const size=s/8,joined=new Uint8Array(16+ciphertext.length);joined.set(iv);joined.set(ciphertext,16);
+ return Array.from({length:Math.ceil(plaintext.length/size)},(_,i)=>({label:`Segment ${i+1}`,expression:`AES(${hexEncode(joined.slice(i*size,i*size+16))}) XOR ${hexEncode(plaintext.slice(i*size,(i+1)*size))} = ${hexEncode(ciphertext.slice(i*size,(i+1)*size))}`,note:'Ciphertext feeds the next register; AES output does not.'}));
+}

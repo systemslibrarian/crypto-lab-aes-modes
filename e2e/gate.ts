@@ -166,9 +166,10 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
 
   // Exactly one of the seven mode panels is on screen, and it is ECB.
-  await expect(page.locator('[role="tabpanel"]')).toHaveCount(8);
+  await expect(page.locator('[role="tabpanel"]')).toHaveCount(9);
   await expect(page.locator('[role="tabpanel"]:not([hidden])')).toHaveCount(1);
   await expect(page.locator('#panel-ecb')).toBeVisible();
+  await expect(page.locator('#panel-cfb')).toBeHidden();
   await expect(page.locator('#tab-ecb')).toHaveAttribute('aria-selected', 'true');
 
   // Nothing has been encrypted, so every result region is still closed. If any
@@ -713,6 +714,28 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await page.locator('#ofb-preset').click();
   await expect(page.locator('#ofb-modified')).not.toBeEmpty();
   await scanAt('ofb — modified ciphertext');
+  await openTab('cfb', 'CFB');
+  await page.locator('#cfb-encrypt').click();
+  await expect(page.locator('#cfb-ciphertext')).not.toBeEmpty();
+  await scanAt('cfb — encrypted');
+  await page.locator('#cfb-flip').click();
+  await expect(page.locator('#cfb-flip-result')).not.toBeEmpty();
+  await scanAt('cfb — flipped bit');
+  await page.locator('#cfb-segment').selectOption('8');
+  await page.locator('#cfb-encrypt').click();
+  await page.locator('#cfb-delete-byte').click();
+  await expect(page.locator('#cfb-delete-result')).not.toBeEmpty();
+  await scanAt('cfb — deleted byte');
+  await page.locator('#cfb-search').click();
+  await expect(page.locator('#cfb-search-result')).not.toBeEmpty({timeout:30000});
+  await scanAt('cfb — zero IV search');
+  await page.locator('#cfb-reuse').click();
+  await expect(page.locator('#cfb-reuse-result')).not.toBeEmpty();
+  await scanAt('cfb — reused IV');
+  await page.locator('#cfb-rewrite').click();
+  await expect(page.locator('#cfb-gadget-result')).not.toBeEmpty();
+  await scanAt('cfb — rewritten block');
+
 
   // ── GCM ─────────────────────────────────────────────────────────────────
   await openTab('gcm', 'gcm — panel opened');
@@ -791,7 +814,7 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await openTab('compare', 'compare — panel opened');
 
   await page.locator('#compare-btn').click();
-  await expect(page.locator('#compare-output .compare-card')).toHaveCount(6);
+  await expect(page.locator('#compare-output .compare-card')).toHaveCount(7);
   await expect(page.locator('.compare-dup-warn')).toBeVisible();
   await scanAt('compare — all five modes over a repeating plaintext');
 
@@ -803,7 +826,7 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
 
   await page.locator('#compare-plaintext').fill('No repeats here at all, so nothing should be flagged as duplicated.');
   await page.locator('#compare-btn').click();
-  await expect(page.locator('#compare-output .compare-card')).toHaveCount(6);
+  await expect(page.locator('#compare-output .compare-card')).toHaveCount(7);
   await expect(page.locator('.compare-dup-warn')).toHaveCount(0);
   await scanAt('compare — no mode leaks structure, including ECB');
 

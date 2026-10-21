@@ -10,6 +10,7 @@ import { ecbEncrypt, generateECBKey, analyzeBlocks } from './ecb';
 import { cbcEncrypt } from './cbc';
 import { ctrEncrypt } from './ctr';
 import { ofbXor } from './ofb';
+import { cfbEncrypt } from './cfb';
 import { gcmEncrypt } from './gcm';
 import { ccmEncrypt } from './ccm';
 import { hexEncode, textToBytes, announceError } from './ui';
@@ -150,6 +151,7 @@ export function mountComparePanel(): void {
         note: 'Plaintext XOR keystream(counter). No repeats. Length is preserved exactly.',
       });
       appendCard(out, { name: 'OFB', status: 'legacy', statusLabel: 'CONFIDENTIALITY ONLY', ciphertext: ofbCt, note: 'AES output feeds the next block. No padding or authentication; never reuse an IV with the same key.' });
+      appendCard(out, { name: 'CFB', status: 'legacy', statusLabel: 'CONFIDENTIALITY ONLY', ciphertext: await cfbEncrypt(await generateECBKey(), crypto.getRandomValues(new Uint8Array(16)), pt, 128), note: 'Ciphertext feeds back; self-synchronising at segment boundaries. No authentication.' });
       appendCard(out, {
         name: 'GCM',
         status: 'recommended',

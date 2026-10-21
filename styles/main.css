@@ -1598,3 +1598,10 @@ body {
 #panel-ofb h3 { margin-top:1.5rem; }
 .ofb-alarm { color:var(--danger); background:var(--danger-bg); border:2px solid var(--danger); padding:1rem; white-space:pre-wrap; overflow-wrap:anywhere; margin-block:1rem; }
 @media(max-width:640px) { .ofb-structure { grid-template-columns:1fr; } }
+/* CFB outputs wrap byte strings at small widths; Δ gives damage a text mark. */
+.cfb-output,.cfb-alarm{overflow-wrap:anywhere;white-space:pre-wrap;min-width:0;margin:.8rem 0;line-height:1.7}
+.cfb-alarm{border-left:3px solid var(--danger);padding:.8rem;color:var(--danger)}
+.cfb-chain{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.cfb-chain p{border:1px solid var(--control-border);padding:1rem}
+.cfb-strip{display:flex;flex-wrap:wrap;gap:.25rem;margin:.75rem 0}.cfb-strip strong{width:100%}.cfb-strip span{font-family:monospace;border:1px solid var(--border-strong);padding:.2rem}.cfb-strip [data-changed="true"]{color:var(--danger);border-width:2px}
+#panel-cfb output{display:block;overflow-wrap:anywhere;font-family:monospace}#panel-cfb h4{margin-top:1rem}#panel-cfb details.predict-prompt{display:block}#panel-cfb summary{cursor:pointer;text-decoration:underline}
+@media(max-width:640px){.cfb-chain{grid-template-columns:1fr}}

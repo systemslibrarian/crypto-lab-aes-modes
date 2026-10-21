@@ -2,6 +2,8 @@
 
 ## What It Is
 
+CFB-128 and CFB-8 extend the stream-mode comparison with ciphertext feedback, error propagation, segment resynchronisation, IV-reuse leakage and a known-block rewrite. These are confidentiality-only modes.
+
 This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, `CBC`, `CTR`, `OFB`, `GCM`, and `CCM`, along with a live CBC padding oracle attack. AES is a **symmetric** block cipher, and the mode determines whether you get confidentiality only (`ECB`, `CBC`, `CTR`, `OFB`) or authenticated encryption (`GCM`, `CCM`). These modes solve the practical problem of encrypting messages longer than one block while handling IVs/nonces and, in the AEAD cases, integrity for ciphertext and `AAD`. The demo is educational: it shows real behavior and failure cases, but it is not a new cryptographic protocol.
 
 ## When to Use It
@@ -96,3 +98,9 @@ application separately. Rejected requests keep their failing exit status.
 ## Wider-block proposal
 
 The live demo now distinguishes the [1 June 2026 wGCM consultation](https://csrc.nist.gov/pubs/sp/800/38/d/r1/2prd) from finalized GCM and AES key-size selection. It does not implement wGCM.
+
+### CFB extension verification
+
+Four NIST ciphertext vectors (CFB128/CFB8 × AES128/AES256) from [AES_CFB.pdf](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_CFB.pdf), plus the AES outputs derived by XOR from those vectors, are tested through WebCrypto. `src/cfb.test.ts` independently compares CFB128 with noble and CFB8 with a test-local ECB chain, covers lengths 0–200, error propagation, IV reuse and 2,000 seeded keys for the zero-IV property. `e2e/cfb.spec.ts` re-derives the visible chain with AES-CTR and checks the negative fixture and 320px accessibility.
+
+EFAIL (USENIX Security 2018, §§3.2, 5.3.1) exploited CFB malleability where email clients did not enforce integrity. Tervoort’s Zerologon report (2020, CVE-2020-1472) describes Netlogon’s zero-IV CFB8 weakness. This lab demonstrates only those mode properties; it implements neither email exfiltration nor Netlogon.
