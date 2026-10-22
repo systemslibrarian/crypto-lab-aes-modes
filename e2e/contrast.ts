@@ -13,7 +13,7 @@ import type { Page } from '@playwright/test';
  *    `incomplete` rather than measuring it.
  *  - text over a surface the STYLESHEET never names, because JavaScript set it
  *    inline. That is the half that matters on this page. Every `.block-cell`
- *    in the ECB grid and the five-mode comparison takes its
+ *    in the ECB grid and the seven-mode comparison takes its
  *    `background-color` from a ten- or fifteen-entry palette in `ecb.ts` /
  *    `compare.ts`, chosen per distinct ciphertext block; the CSS only says
  *    `color: #fff`. Reading the stylesheet tells you nothing about what that

@@ -21,6 +21,8 @@ This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, 
 
 The demo lets you encrypt plaintext in `ECB`, `CBC`, `CTR`, `OFB`, `CFB`, `GCM`, and `CCM`, then inspect the resulting key, `IV`/nonce, ciphertext, and authentication data where applicable. It also includes an image upload for the ECB pattern-leakage demo, a manual `IV` input for CBC, a two-message nonce reuse setup for CTR, `AAD` and `Tag Length (bits)` controls for GCM, and step-by-step controls for the padding oracle attack. It demonstrates encryption, tamper detection, and attack behavior rather than a general-purpose decrypt workflow.
 
+The **Same plaintext, all seven modes** comparison runs those seven modes on one input with fresh keys and IVs/nonces, then displays their ciphertext block grids side by side. ECB's repeated blocks expose structure; this visual comparison does not make the other five confidentiality-only modes authenticated. Only GCM and CCM include authentication.
+
 ## What Can Go Wrong
 
 - **`ECB` pattern leakage:** identical plaintext blocks encrypt to identical ciphertext blocks, so message structure remains visible.

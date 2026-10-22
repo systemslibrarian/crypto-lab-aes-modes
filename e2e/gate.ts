@@ -813,10 +813,13 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   // ── Compare ─────────────────────────────────────────────────────────────
   await openTab('compare', 'compare — panel opened');
 
+  await expect(page.locator('#panel-compare h2')).toHaveText('Same plaintext, all seven modes');
+  await expect(page.locator('#compare-btn')).toHaveText('Encrypt under all 7 modes');
+
   await page.locator('#compare-btn').click();
   await expect(page.locator('#compare-output .compare-card')).toHaveCount(7);
   await expect(page.locator('.compare-dup-warn')).toBeVisible();
-  await scanAt('compare — all five modes over a repeating plaintext');
+  await scanAt('compare — all seven modes over a repeating plaintext');
 
   // Each card hides its full ciphertext behind a closed <details>; the old gate
   // forced all of them open at once from script instead of clicking a summary.

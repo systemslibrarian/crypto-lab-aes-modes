@@ -9,7 +9,7 @@ import { boot, driveAllStates, expectBaselineNotStale, NARROW } from './gate';
  * vulnerability demo run, every decrypt variant (correct, wrong key, wrong IV,
  * wrong nonce, wrong AAD, tampered) rendered in its own right, the ECB penguin
  * comparison driven with a real uploaded image, the live GCM forbidden attack
- * run and controlled, the five-mode comparison built with and without repeated
+ * run and controlled, the seven-mode comparison built with and without repeated
  * blocks, the padding oracle set up and run to full recovery, and every
  * self-check answered both right and wrong. Every resulting state is scanned in
  * both themes at desktop and phone width.

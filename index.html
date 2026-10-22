@@ -928,17 +928,17 @@
     <!-- Panel: Compare -->
     <section role="tabpanel" id="panel-compare" class="mode-panel" aria-labelledby="tab-compare" hidden>
       <div class="panel-header">
-        <h2>Same plaintext, all six modes</h2>
+        <h2>Same plaintext, all seven modes</h2>
         <span class="status-chip status-compare">SIDE-BY-SIDE</span>
       </div>
-      <p class="panel-desc">Type any plaintext (try one with repeated 16-byte blocks). The lab encrypts it under <strong>ECB</strong>, <strong>CBC</strong>, <strong>CTR</strong>, <strong>OFB</strong>, <strong>GCM</strong>, and <strong>CCM</strong> with fresh random keys/nonces and renders the ciphertext block grids side-by-side. ECB will show repeats; the others won't.</p>
+      <p class="panel-desc">Type any plaintext (try one with repeated 16-byte blocks). The lab encrypts it under <strong>ECB</strong>, <strong>CBC</strong>, <strong>CTR</strong>, <strong>OFB</strong>, <strong>CFB</strong>, <strong>GCM</strong>, and <strong>CCM</strong> with fresh random keys and IVs/nonces, then renders ciphertext block grids side by side. ECB will show repeats; the others won't.</p>
 
       <div class="demo-controls">
         <div class="input-group">
           <label for="compare-plaintext">Plaintext</label>
           <textarea id="compare-plaintext" rows="3" placeholder='Try "YELLOW SUBMARINE" repeated 4 times…'></textarea>
         </div>
-        <button id="compare-btn" class="btn btn-primary">Encrypt under all 6 modes</button>
+        <button id="compare-btn" class="btn btn-primary">Encrypt under all 7 modes</button>
       </div>
 
       <div class="compare-grid" id="compare-output" aria-live="polite"></div>
@@ -946,7 +946,7 @@
       <div class="explainer">
         <h3>What to look for</h3>
         <p><strong>ECB:</strong> repeated input blocks → repeated colored squares. Structure leaked.</p>
-        <p><strong>CBC / CTR / GCM / CCM:</strong> every block looks unique even when the input repeats. That's chaining or keystream doing its job.</p>
+        <p><strong>CBC / CTR / OFB / CFB / GCM / CCM:</strong> every block looks unique even when the input repeats. That's chaining or keystream doing its job.</p>
         <p>Look at the legend at the bottom of each row — only ECB will report duplicate blocks.</p>
       </div>
     </section>

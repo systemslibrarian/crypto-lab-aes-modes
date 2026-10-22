@@ -1,7 +1,7 @@
 /**
- * compare.ts — Same-plaintext, all-six-modes side-by-side renderer.
+ * compare.ts — Same-plaintext, all-seven-modes side-by-side renderer.
  *
- * Encrypts the same input under ECB, CBC, CTR, OFB, GCM, CCM with fresh random
+ * Encrypts the same input under ECB, CBC, CTR, OFB, CFB, GCM, CCM with fresh random
  * key/nonce per mode, then draws each ciphertext as a block grid so students
  * can SEE that only ECB leaks repeated blocks.
  */
