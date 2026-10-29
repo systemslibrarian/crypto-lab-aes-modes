@@ -376,9 +376,9 @@
         </div>
         <div class="btn-row">
           <button id="cbc-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CBC mode">Encrypt with CBC</button>
-          <button id="cbc-iv-reuse-btn" class="btn btn-secondary" aria-label="Demonstrate IV reuse vulnerability" disabled>Demo: IV Reuse</button>
+          <button id="cbc-iv-reuse-btn" class="btn btn-secondary" aria-label="Demo: IV Reuse, the IV reuse vulnerability" disabled>Demo: IV Reuse</button>
           <button id="cbc-bitflip-btn" class="btn btn-secondary" aria-label="Demo: Bit-Flip, the bit-flip attack" disabled>Demo: Bit-Flip</button>
-          <button id="cbc-targeted-btn" class="btn btn-secondary" aria-label="Targeted bit-flip puzzle">Demo: Targeted Bit-Flip (admin=0 → admin=1)</button>
+          <button id="cbc-targeted-btn" class="btn btn-secondary" aria-label="Demo: Targeted Bit-Flip (admin=0 → admin=1), the targeted bit-flip puzzle">Demo: Targeted Bit-Flip (admin=0 → admin=1)</button>
         </div>
       </div>
 
@@ -496,7 +496,7 @@
         </div>
         <div class="btn-row">
           <button id="ctr-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CTR mode">Encrypt with CTR</button>
-          <button id="ctr-nonce-reuse-btn" class="btn btn-secondary" aria-label="Demonstrate nonce reuse attack" disabled>Demo: Nonce Reuse</button>
+          <button id="ctr-nonce-reuse-btn" class="btn btn-secondary" aria-label="Demo: Nonce Reuse, the nonce reuse attack" disabled>Demo: Nonce Reuse</button>
         </div>
       </div>
 
@@ -674,7 +674,7 @@
         </div>
         <div class="btn-row">
           <button id="gcm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with GCM mode">Encrypt with GCM</button>
-          <button id="gcm-tamper-btn" class="btn btn-secondary" aria-label="Demonstrate tampered ciphertext rejection" disabled>Demo: Tamper Detection</button>
+          <button id="gcm-tamper-btn" class="btn btn-secondary" aria-label="Demo: Tamper Detection, tampered ciphertext is rejected" disabled>Demo: Tamper Detection</button>
         </div>
       </div>
 
@@ -780,8 +780,8 @@
           <input type="text" id="forbidden-forged" value="PAY EVE $10000!!" maxlength="16">
         </div>
         <div class="btn-row">
-          <button id="forbidden-run-btn" class="btn btn-primary" aria-label="Recover H and forge a ciphertext by reusing the nonce">Reuse nonce &rarr; recover H &rarr; forge</button>
-          <button id="forbidden-control-btn" class="btn btn-secondary" aria-label="Run the same attack with a fresh nonce as a control">Control: fresh nonce (should fail)</button>
+          <button id="forbidden-run-btn" class="btn btn-primary" aria-label="Reuse nonce, recover H, forge: recover H and forge a ciphertext by reusing the nonce">Reuse nonce &rarr; recover H &rarr; forge</button>
+          <button id="forbidden-control-btn" class="btn btn-secondary" aria-label="Control: fresh nonce (should fail), the same attack with a fresh nonce">Control: fresh nonce (should fail)</button>
         </div>
         <div id="forbidden-output" class="decrypt-output" role="region" aria-labelledby="forbidden-title" aria-live="polite" hidden></div>
       </div>
@@ -828,7 +828,7 @@
         </div>
         <div class="btn-row">
           <button id="ccm-encrypt-btn" class="btn btn-primary" aria-label="Encrypt with CCM mode">Encrypt with CCM</button>
-          <button id="ccm-tamper-btn" class="btn btn-secondary" aria-label="Demonstrate tampered ciphertext rejection" disabled>Demo: Tamper Detection</button>
+          <button id="ccm-tamper-btn" class="btn btn-secondary" aria-label="Demo: Tamper Detection, tampered ciphertext is rejected" disabled>Demo: Tamper Detection</button>
         </div>
       </div>
 
@@ -972,7 +972,7 @@
           <span class="predict-answer">Yes. Each correctly-paired guess reveals one intermediate byte, which XOR'd with the real previous-block byte gives one plaintext byte. ~128 queries per byte on average, ~2048 per block. Watch it happen below.</span>
         </div>
         <div class="btn-row">
-          <button id="oracle-setup-btn" class="btn btn-primary" aria-label="Encrypt and set up oracle attack">Encrypt &amp; Setup Oracle</button>
+          <button id="oracle-setup-btn" class="btn btn-primary" aria-label="Encrypt &amp; Setup Oracle: encrypt and set up the oracle attack">Encrypt &amp; Setup Oracle</button>
           <button id="oracle-run-btn" class="btn btn-secondary" disabled>Run Attack</button>
         </div>
       </div>
