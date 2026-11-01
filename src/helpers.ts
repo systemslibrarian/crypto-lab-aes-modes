@@ -68,7 +68,14 @@ export function mountGlossary(): void {
     tip.className = 'glossary-tip';
     tip.id = `glossary-tip-${++tipSeq}`;
     tip.setAttribute('role', 'tooltip');
-    tip.innerHTML = `<strong>${term}</strong> — ${def}`;
+    // Built with DOM calls rather than innerHTML. `term` is a [data-term]
+    // attribute read, so CodeQL reports js/xss-through-dom here; `def` is a
+    // constant from GLOSSARY above. Neither the terms nor the 13 definitions
+    // contain a tag -- checked -- and the entities some of them use are already
+    // decoded by getAttribute, so textContent renders exactly the same.
+    const strong = document.createElement('strong');
+    strong.textContent = term;
+    tip.append(strong, ` \u2014 ${def}`);
     el.appendChild(tip);
     el.setAttribute('aria-describedby', tip.id);
     el.addEventListener('mouseenter', () => positionGlossaryTip(el, tip));
@@ -328,7 +335,13 @@ export function mountQuizzes(): void {
       explain.hidden = false;
       explain.className = `quiz-explain ${ok ? 'quiz-correct' : 'quiz-incorrect'}`;
       const why = q.getAttribute(ok ? 'data-why-correct' : 'data-why-wrong') ?? '';
-      explain.innerHTML = `<strong>${ok ? '✓ Correct.' : '✗ Not quite.'}</strong> ${why}`;
+      // Same reason: `why` is a data-why-correct / data-why-wrong attribute
+      // read. None of those attributes contains a tag -- checked -- only
+      // entities, which getAttribute has already decoded.
+      explain.replaceChildren();
+      const verdict = document.createElement('strong');
+      verdict.textContent = ok ? '\u2713 Correct.' : '\u2717 Not quite.';
+      explain.append(verdict, ` ${why}`);
     });
   });
 }
