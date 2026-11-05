@@ -7,7 +7,20 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const npmCli = join(process.execPath, '..', '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js');
+
+function npmInvocation() {
+  // npm tells child scripts exactly which CLI launched them. Use that instead of
+  // assuming npm lives under the Node executable: Homebrew installs Node and npm in
+  // separate prefixes, and the old assumption made both of these controls fail before
+  // they exercised the deploy script at all. The same repair is on vdf, token-tell,
+  // vigenere-break and timing-sidechannel.
+  if (process.env.npm_execpath) {
+    return { command: process.execPath, args: [process.env.npm_execpath] };
+  }
+  // Keep a direct `node --test` useful too. The original PATH is retained below, after
+  // the temporary fake `gh`, so the platform's npm launcher stays discoverable.
+  return { command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: [] };
+}
 
 // Replace only the external GitHub boundary; exercise the real npm script.
 // Neither control dispatches a workflow or uploads any local build.
@@ -17,7 +30,8 @@ function request(exitCode) {
   writeFileSync(gh, '#!/usr/bin/env node\nconsole.log(JSON.stringify(process.argv.slice(2)));\nprocess.exit(Number(process.env.PUBLISH_CONTROL_EXIT));\n');
   chmodSync(gh, 0o700);
   try {
-    return spawnSync(process.execPath, [npmCli, 'run', 'deploy', '--silent'], {
+    const npm = npmInvocation();
+    return spawnSync(npm.command, [...npm.args, 'run', 'deploy', '--silent'], {
       cwd: root,
       env: { ...process.env, PATH: dir + delimiter + process.env.PATH, GH_TOKEN: '', PUBLISH_CONTROL_EXIT: String(exitCode) },
       encoding: 'utf8',
