@@ -818,6 +818,10 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
 
   await page.locator('#compare-btn').click();
   await expect(page.locator('#compare-output .compare-card')).toHaveCount(7);
+  // Two of the seven are authenticated (GCM and CCM, the only cards whose note
+  // says AEAD); the other five -- ECB, CBC, CTR, OFB, CFB -- are
+  // confidentiality only, which is what the README's wording turns on.
+  await expect(page.locator('#compare-output .compare-card', { hasText: 'AEAD' })).toHaveCount(2);
   await expect(page.locator('.compare-dup-warn')).toBeVisible();
   await scanAt('compare — all seven modes over a repeating plaintext');
 
