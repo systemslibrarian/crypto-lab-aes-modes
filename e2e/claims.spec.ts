@@ -420,3 +420,14 @@ for(const s of ['128','8'])test(`CFB-${s} printed chain independently recomputed
 test('CFB zero-IV hit is independently checked, with alarm verdict',async({page})=>{await openCFB(page);await page.locator('#cfb-search').click();await expect(page.locator('#cfb-search-result')).toHaveAttribute('data-verdict','hit',{timeout:30000});await expect(page.locator('#cfb-search-result')).toHaveClass('cfb-alarm');const first=await page.evaluate(async()=>{const text=document.getElementById('cfb-search-result')!.textContent!,raw=Uint8Array.from(text.match(/Key ([a-f0-9]+);/)![1].match(/../g)!.map(x=>parseInt(x,16))),k=await crypto.subtle.importKey('raw',raw,'AES-CTR',false,['encrypt']);return new Uint8Array(await crypto.subtle.encrypt({name:'AES-CTR',counter:new Uint8Array(16),length:128},k,new Uint8Array(16)))[0];});expect(first).toBe(0);});
 
 for(const width of [1280,320])test(`CFB accessible new states ${width}px`,async({page,browserName})=>{test.skip(browserName !== 'chromium', 'The scan gate runs in Chromium; functional claims run in every engine.');test.setTimeout(300000);await openCFB(page);await page.setViewportSize({width,height:900});await encryptCFB(page);await scan(page,`CFB encrypted ${width}`);await page.locator('#cfb-flip').click();await expect(page.locator('#cfb-flip-result')).not.toBeEmpty();await scan(page,`CFB flipped ${width}`);await encryptCFB(page,'8');await page.locator('#cfb-delete-byte').click();await scan(page,`CFB deleted ${width}`);await page.locator('#cfb-reuse').click();await scan(page,`CFB reuse ${width}`);await page.locator('#cfb-rewrite').click();await scan(page,`CFB gadget ${width}`);await page.locator('#cfb-search').click();await expect(page.locator('#cfb-search-result')).not.toBeEmpty({timeout:30000});await scan(page,`CFB zero IV ${width}`);});
+
+test('the ECB panel paraphrases SP 800-38A §6.1 rather than overstating it', async ({ page }) => {
+  // SP 800-38A §6.1: "If this property is undesirable in a particular
+  // application, the ECB mode should not be used." The document states no
+  // unconditional ban, so the page must not attribute one to it.
+  await page.goto('./');
+  const desc = page.locator('#panel-ecb .panel-desc');
+  await expect(desc).toContainText('is undesirable in a particular application, the ECB mode should not be used');
+  await expect(desc).not.toContainText(/As defined in\s*NIST SP 800-38A/);
+  await expect(desc).not.toContainText(/SP 800-38A[^.]*ECB should never be used/);
+});

@@ -237,7 +237,7 @@
         <h2>ECB: The Dangerous Default</h2>
         <span class="status-chip status-avoid">AVOID<span class="sr-only"> — never use for multi-block data</span></span>
       </div>
-      <p class="panel-desc">Electronic Codebook mode encrypts each block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking the structure of the message. As defined in <strong>NIST SP 800-38A</strong>, <span data-term="ECB" class="glossary">ECB</span> should never be used for multi-block data.</p>
+      <p class="panel-desc">Electronic Codebook mode encrypts each block independently with the same key. Identical plaintext blocks produce identical ciphertext blocks, leaking the structure of the message. <strong>NIST SP 800-38A</strong> §6.1 states the rule conditionally — if that property “is undesirable in a particular application, the ECB mode should not be used” — but for multi-block data it is undesirable almost always, so treat <span data-term="ECB" class="glossary">ECB</span> as never.</p>
 
       <div class="demo-controls">
         <div class="input-group">
