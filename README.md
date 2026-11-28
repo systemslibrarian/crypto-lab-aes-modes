@@ -11,7 +11,7 @@ This project is an interactive demo of `AES-128` and `AES-256` used with `ECB`, 
 - **Use `GCM` for general-purpose application and transport encryption.** It gives confidentiality and authenticity together, which is why the demo marks it as the recommended default.
 - **Use `CCM` in constrained or embedded environments that already standardize on it.** The code and UI describe it as a two-pass AEAD mode suited to low-power protocols.
 - **Use `CTR` only when you can guarantee a unique counter/nonce and add separate integrity protection.** It behaves like a stream cipher and fails badly if a nonce is ever reused.
-- **Use `CBC` only for legacy interoperability, with an unpredictable `IV` and Encrypt-then-MAC.** The demo shows that confidentiality alone is not enough.
+- **Use `CBC` only for legacy interoperability, with an unpredictable `IV` and Encrypt-then-MAC.** Use independent keys for AES and HMAC. In A128CBC-HS256, the first 16 bytes of a random 32-byte key form the MAC key and the last 16 form the encryption key. The receiver authenticates the associated data, IV, ciphertext and encoded length before decrypting. [RFC 7518 §§5.2.2–5.2.3](https://www.rfc-editor.org/rfc/rfc7518.html#section-5.2.2).
 - **Do not use `ECB` for multi-block data.** Repeated plaintext blocks remain repeated in the ciphertext and leak structure.
 - **Do NOT treat this as a production crypto library** — it is a teaching demo of mode behavior and failure cases, not hardened code.
 
